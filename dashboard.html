@@ -42,7 +42,7 @@
             <div class="avatar">V</div>
             <div>
                 <div style="font-size: 10px; color:#aaa;">Welcome Back</div>
-                <div style="font-size: 15px; font-weight:bold;">Vimukthi Thuhina</div>
+                <div style="font-size: 15px; font-weight:bold;"<h2 id="user-name">Loading...</h2></div>
             </div>
         </div>
         <div class="wallet" onclick="goToPage('wallet.html')">
@@ -99,6 +99,32 @@
             document.getElementById('gameModal').style.display = 'none';
         }
     </script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script>
+    // ඔබේ Firebase Config එක මෙතනටත් දාන්න
+    const firebaseConfig = {
+        apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
+        authDomain: "vissaprocarrom.firebaseapp.com",
+        projectId: "vissaprocarrom",
+        // ... ඉතිරි ටිකත් දාන්න
+    };
+
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+
+    // පරිශීලකයා ලොගින් වී ඇත්දැයි පරීක්ෂා කර නම පෙන්වීම
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            // Google එකේ තියෙන නම මෙතනට වැටෙනවා
+            document.getElementById('user-name').innerText = user.displayName;
+        } else {
+            // ලොගින් වෙලා නැත්නම් ආපහු login පිටුවට යවනවා
+            window.location.href = "index.html";
+        }
+    });
+</script>
 
 </body>
 </html>
