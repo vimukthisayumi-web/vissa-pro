@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet - VISSA PRO</title>
+    <style>
+        /* මූලික පෙනුම */
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: radial-gradient(circle, #1a1a4f 0%, #08051a 100%); 
+            color: white; 
+            margin: 0; 
+            padding: 20px;
+            padding-bottom: 80px; /* පල්ලෙහා මෙනු එකට ඉඩ තැබීමට */
+        }
+
+        /* ඉහළ කොටස (Header) */
+        .wallet-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: gold;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* සල්ලි පෙන්වන කාඩ් එක */
+        .balance-card {
+            background: linear-gradient(135deg, #2e2e8e 0%, #1a1a4f 100%);
+            padding: 30px 20px;
+            border-radius: 25px;
+            text-align: center;
+            border: 1px solid rgba(255,215,0,0.3);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            margin-bottom: 25px;
+        }
+        .balance-label { font-size: 14px; color: #aaa; margin-bottom: 10px; }
+        .balance-amount { font-size: 36px; font-weight: bold; color: gold; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+
+        /* Deposit & Withdraw බොත්තම් */
+        .action-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .action-btn {
+            padding: 18px;
+            border-radius: 20px;
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .deposit { background: linear-gradient(45deg, #00b09b, #96c93d); }
+        .withdraw { background: linear-gradient(45deg, #f83600, #f9d423); }
+
+        /* ගනුදෙනු විස්තර (History) */
+        .history-title {
+            font-size: 17px;
+            border-left: 4px solid #0cf;
+            padding-left: 10px;
+            margin-bottom: 15px;
+        }
+        .history-item {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        /* --- පල්ලෙහා මෙනු එක (Bottom Navigation) --- */
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0;
+            width: 100%; 
+            height: 65px; 
+            background: #100a2e; 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+            border-top: 1px solid #333; 
+            z-index: 1000;
+        }
+        .nav-item { 
+            text-align: center; 
+            color: #888; 
+            font-size: 10px; 
+            cursor: pointer; 
+            flex: 1;
+            text-decoration: none;
+        }
+        .nav-item.active { color: gold; }
+        .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="wallet-header">
+        <button class="back-btn" onclick="window.location.href='dashboard.html'">❮</button>
+        <h2 style="margin:0;">මුදල් පසුම්බිය</h2>
+    </div>
+
+    <div class="balance-card">
+        <div class="balance-label">දැනට ඇති මුළු මුදල</div>
+        <div class="balance-amount">LKR 0.00</div>
+    </div>
+
+    <div class="action-container">
+        <button class="action-btn deposit" onclick="window.location.href='deposit.html'">
+            <span style="font-size:24px;">💰</span>
+            DEPOSIT
+        </button>
+        <button class="action-btn withdraw" onclick="window.location.href='withdraw.html'">
+            <span style="font-size:24px;">💳</span>
+            WITHDRAW
+        </button>
+    </div>
+
+    <div class="history-title">ගනුදෙනු විස්තර (History)</div>
+    <div class="history-item">
+        <div style="display:flex; flex-direction:column;">
+            <span style="font-weight:bold; font-size:14px;">Welcome Bonus</span>
+            <span style="font-size:11px; color:#888;">අද, 10:30 AM</span>
+        </div>
+        <div style="color:#0f0; font-weight:bold;">+ LKR 0.00</div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item" onclick="window.location.href='dashboard.html'">
+            <span class="nav-icon">🏠</span>මුල් පිටුව
+        </div>
+        <div class="nav-item active" onclick="window.location.href='wallet.html'">
+            <span class="nav-icon">👜</span>පසුම්බිය
+        </div>
+        <div class="nav-item" onclick="window.location.href='events.html'">
+            <span class="nav-icon">🏆</span>සිදුවීම්
+        </div>
+        <div class="nav-item" onclick="window.location.href='notifications.html'">
+            <span class="nav-icon">🔔</span>දැනුම්දීම්
+        </div>
+        <div class="nav-item" onclick="window.location.href='profile.html'">
+            <span class="nav-icon">👤</span>පැතිකඩ
+        </div>
+    </div>
+
+</body>
+</html>
