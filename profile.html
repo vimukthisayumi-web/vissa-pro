@@ -5,146 +5,167 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - VISSA PRO</title>
     <style>
-        /* මූලික පෙනුම */
         body { 
             font-family: 'Segoe UI', sans-serif; 
             background: radial-gradient(circle, #1a1a4f 0%, #08051a 100%); 
             color: white; 
-            margin: 0; 
-            padding: 20px; 
-            padding-bottom: 100px; /* යට තීරුවට ඉඩ තැබීමට */
+            margin: 0; padding: 20px; padding-bottom: 100px;
             text-align: center; 
         }
-
-        /* Profile Photo සහ නම */
+        /* Profile Image */
+        .profile-container { position: relative; width: 100px; height: 100px; margin: 20px auto; }
         .profile-img { 
             width: 100px; height: 100px; 
-            background: orange; border-radius: 50%; 
-            margin: 20px auto; display: flex; 
-            align-items: center; justify-content: center; 
-            font-size: 40px; border: 4px solid gold; 
-            box-shadow: 0 0 15px gold;
+            border-radius: 50%; border: 4px solid gold; 
+            box-shadow: 0 0 15px gold; object-fit: cover;
         }
-        h3 { margin-bottom: 5px; }
-
-        /* තොරතුරු පෙට්ටි */
+        h3 { margin-top: 10px; margin-bottom: 5px; }
         .info-container { margin-top: 30px; text-align: left; }
         .info-box { 
-            background: rgba(255,255,255,0.05); 
-            padding: 15px; 
-            border-radius: 15px; 
-            margin-bottom: 12px; 
-            border-left: 4px solid #0cf;
+            background: rgba(255,255,255,0.05); padding: 15px; 
+            border-radius: 15px; margin-bottom: 12px; border-left: 4px solid #0cf;
         }
         .label { font-size: 11px; color: #aaa; text-transform: uppercase; }
-        .value { font-size: 15px; font-weight: bold; margin-top: 3px; }
-
-        /* Logout බොත්තම */
+        .value { font-size: 15px; font-weight: bold; margin-top: 3px; word-wrap: break-word; }
         .logout-btn { 
             background: linear-gradient(45deg, #ff4444, #8b0000); 
-            color: white; border: none; 
-            padding: 15px; width: 100%; 
-            border-radius: 15px; margin-top: 30px; 
-            font-weight: bold; cursor: pointer;
+            color: white; border: none; padding: 15px; width: 100%; 
+            border-radius: 15px; margin-top: 30px; font-weight: bold;
         }
-
-        /* --- පල්ලෙහා මෙනු එක (Bottom Nav) --- */
         .bottom-nav { 
-            position: fixed; bottom: 0; left: 0; 
-            width: 100%; height: 65px; 
-            background: #100a2e; display: flex; 
-            justify-content: space-around; align-items: center; 
-            border-top: 1px solid #333; z-index: 1000;
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; 
+            background: #100a2e; display: flex; justify-content: space-around; 
+            align-items: center; border-top: 1px solid #333; z-index: 1000;
         }
-        .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; flex: 1; }
+        .nav-item { text-align: center; color: #888; font-size: 10px; flex: 1; text-decoration: none; }
         .nav-item.active { color: gold; }
         .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
+        input { background: rgba(255,255,255,0.1); color: white; border: 1px solid #555; padding: 8px; border-radius: 5px; width: 70%; }
+        button.verify-btn { background: #ffcc00; color: black; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-    <h2 style="margin-bottom: 20px;">මගේ පැතිකඩ</h2>
+    <h2>මගේ පැතිකඩ</h2>
+    
+    <div class="profile-container">
+        <img id="user-photo" class="profile-img" src="https://via.placeholder.com/100" alt="Profile">
+    </div>
 
-    <div class="profile-img"><img id="user-photo" class="profile-img" src="" alt="Profile"></div>
-    <h3><h3 id="user-name">Loading...</h3></h3>
+    <h3 id="user-name">Loading...</h3>
     <p style="color: gold; font-size: 12px;">VISSA PRO Member</p>
 
     <div class="info-container">
         <div class="info-box">
             <div class="label">ඊමේල් ලිපිනය</div>
-            <div class="value"><div id="user-email" class="value">Loading...</div></div>
+            <div id="user-email" class="value">Loading...</div>
         </div>
-       <div class="info-box">
-    <div class="label">දුරකථන අංකය</div>
-    <div id="phone-container">
-        <input type="text" id="phone-number" placeholder="+947XXXXXXXX" style="background: transparent; color: white; border: 1px solid #555; padding: 5px; width: 80%;">
-        <button onclick="sendOTP()" style="background: #ffcc00; color: black; border: none; padding: 5px 10px; margin-top: 5px; border-radius: 5px; font-size: 12px;">Code එක එවන්න</button>
-    </div>
 
-    <div id="otp-section" style="display: none; margin-top: 10px;">
-        <input type="text" id="verification-code" placeholder="OTP Code එක" style="background: transparent; color: white; border: 1px solid #555; padding: 5px; width: 80%;">
-        <button onclick="verifyOTP()" style="background: #00ff00; color: black; border: none; padding: 5px 10px; margin-top: 5px; border-radius: 5px; font-size: 12px;">Verify කරන්න</button>
-    </div>
-</div>
+        <div class="info-box">
+            <div class="label">දුරකථන අංකය</div>
+            <div id="phone-container">
+                <input type="text" id="phone-number" placeholder="+947XXXXXXXX">
+                <button class="verify-btn" onclick="sendOTP()">Code එවන්න</button>
+            </div>
+            <div id="otp-section" style="display: none; margin-top: 10px;">
+                <input type="text" id="verification-code" placeholder="OTP Code එක">
+                <button class="verify-btn" style="background: #00ff00;" onclick="verifyOTP()">Verify</button>
+            </div>
+        </div>
 
-<div id="recaptcha-container"></div> 
         <div class="info-box">
             <div class="label">ජයග්‍රහණ ගණන</div>
             <div class="value">05</div>
         </div>
     </div>
 
-    <button class="logout-btn" onclick="window.location.href='index.html'">LOGOUT</button>
+    <div id="recaptcha-container"></div>
+
+    <button class="logout-btn" onclick="logoutUser()">LOGOUT</button>
 
     <div class="bottom-nav">
-        <div class="nav-item" onclick="window.location.href='dashboard.html'"><span class="nav-icon">🏠</span>මුල් පිටුව</div>
-        <div class="nav-item" onclick="window.location.href='wallet.html'"><span class="nav-icon">👜</span>පසුම්බිය</div>
-        <div class="nav-item" onclick="window.location.href='events.html'"><span class="nav-icon">🏆</span>සිදුවීම්</div>
-        <div class="nav-item" onclick="window.location.href='notifications.html'"><span class="nav-icon">🔔</span>දැනුම්දීම්</div>
-        <div class="nav-item active" onclick="window.location.href='profile.html'"><span class="nav-icon">👤</span>පැතිකඩ</div>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon">🏠</span>මුල් පිටුව</a>
+        <a href="wallet.html" class="nav-item"><span class="nav-icon">👜</span>පසුම්බිය</a>
+        <a href="events.html" class="nav-item"><span class="nav-icon">🏆</span>සිදුවීම්</a>
+        <a href="notifications.html" class="nav-item"><span class="nav-icon">🔔</span>දැනුම්දීම්</a>
+        <a href="profile.html" class="nav-item active"><span class="nav-icon">👤</span>පැතිකඩ</a>
     </div>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
-<script>
-    var confirmationResult;
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
-    // පිටුව Load වෙද්දීම Recaptcha සූදානම් කිරීම
-    window.onload = function() {
-        if (!window.recaptchaVerifier) {
-            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-                'size': 'invisible'
+    <script>
+        // *** මෙන්න මේ කොටස තමයි ඔයාට අඩු වෙලා තිබුණේ ***
+        const firebaseConfig = {
+            apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
+            authDomain: "vissaprocarrom.firebaseapp.com",
+            projectId: "vissaprocarrom",
+            storageBucket: "vissaprocarrom.firebasestorage.app",
+            messagingSenderId: "722305696915",
+            appId: "1:722305696915:web:056e8be25a245ac29c7966",
+            measurementId: "G-KCKJLGX5J5"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        // පරිශීලක තොරතුරු පෙන්වීම
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById('user-name').innerText = user.displayName || "පරිශීලකයා";
+                document.getElementById('user-email').innerText = user.email;
+                if (user.photoURL) {
+                    document.getElementById('user-photo').src = user.photoURL;
+                }
+                // දුරකථන අංකය දැනටමත් තිබේ නම්
+                if (user.phoneNumber) {
+                    document.getElementById('phone-container').innerHTML = '<div class="value">' + user.phoneNumber + '</div>';
+                }
+            } else {
+                window.location.href = "index.html";
+            }
+        });
+
+        // Phone Auth කොටස
+        var confirmationResult;
+        
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+            'size': 'invisible'
+        });
+
+        function sendOTP() {
+            const phoneNumber = document.getElementById('phone-number').value;
+            if (!phoneNumber.startsWith('+')) {
+                alert("කරුණාකර රටේ කේතය සහිතව අංකය ඇතුළත් කරන්න (උදා: +947...)");
+                return;
+            }
+            
+            firebase.auth().signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
+                .then((result) => {
+                    confirmationResult = result;
+                    alert("Code එක එවුවා!");
+                    document.getElementById('otp-section').style.display = 'block';
+                }).catch((error) => {
+                    alert("දෝෂයක්: " + error.message);
+                });
+        }
+
+        function verifyOTP() {
+            const code = document.getElementById('verification-code').value;
+            confirmationResult.confirm(code).then((result) => {
+                alert("සාර්ථකව Verify වුණා!");
+                location.reload(); // පිටුව refresh කර අංකය පෙන්වන්න
+            }).catch((error) => {
+                alert("වැරදි Code එකක්!");
             });
         }
-    };
 
-    function sendOTP() {
-        const phoneNumber = document.getElementById('phone-number').value;
-        const appVerifier = window.recaptchaVerifier;
-
-        firebase.auth().signInWithPhoneNumber(phoneNumber, appVerifier)
-            .then((result) => {
-                confirmationResult = result;
-                alert("Code එක ඔයාගේ Phone එකට එවුවා!");
-                document.getElementById('otp-section').style.display = 'block';
-            }).catch((error) => {
-                alert("දෝෂයක්: " + error.message);
+        function logoutUser() {
+            firebase.auth().signOut().then(() => {
+                window.location.href = "index.html";
             });
-    }
-
-    function verifyOTP() {
-        const code = document.getElementById('verification-code').value;
-
-        confirmationResult.confirm(code).then((result) => {
-            alert("සාර්ථකව Verify වුණා!");
-            document.getElementById('phone-container').innerHTML = '<div class="value">' + result.user.phoneNumber + '</div>';
-            document.getElementById('otp-section').style.display = 'none';
-        }).catch((error) => {
-            alert("වැරදි Code එකක්. ආයෙත් උත්සාහ කරන්න.");
-        });
-    }
-</script>
-
-</body> </html>
+        }
+    </script>
 </body>
 </html>
