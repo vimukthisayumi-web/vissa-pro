@@ -65,19 +65,29 @@
 
     <h2 style="margin-bottom: 20px;">මගේ පැතිකඩ</h2>
 
-    <div class="profile-img">V</div>
-    <h3>Vimukthi Thuhina</h3>
+    <div class="profile-img"><img id="user-photo" class="profile-img" src="" alt="Profile"></div>
+    <h3><h3 id="user-name">Loading...</h3></h3>
     <p style="color: gold; font-size: 12px;">VISSA PRO Member</p>
 
     <div class="info-container">
         <div class="info-box">
             <div class="label">ඊමේල් ලිපිනය</div>
-            <div class="value">vimukthi@example.com</div>
+            <div class="value"><div id="user-email" class="value">Loading...</div></div>
         </div>
-        <div class="info-box">
-            <div class="label">දුරකථන අංකය</div>
-            <div class="value">077 123 4567</div>
-        </div>
+       <div class="info-box">
+    <div class="label">දුරකථන අංකය</div>
+    <div id="phone-container">
+        <input type="text" id="phone-number" placeholder="+947XXXXXXXX" style="background: transparent; color: white; border: 1px solid #555; padding: 5px; width: 80%;">
+        <button onclick="sendOTP()" style="background: #ffcc00; color: black; border: none; padding: 5px 10px; margin-top: 5px; border-radius: 5px; font-size: 12px;">Code එක එවන්න</button>
+    </div>
+
+    <div id="otp-section" style="display: none; margin-top: 10px;">
+        <input type="text" id="verification-code" placeholder="OTP Code එක" style="background: transparent; color: white; border: 1px solid #555; padding: 5px; width: 80%;">
+        <button onclick="verifyOTP()" style="background: #00ff00; color: black; border: none; padding: 5px 10px; margin-top: 5px; border-radius: 5px; font-size: 12px;">Verify කරන්න</button>
+    </div>
+</div>
+
+<div id="recaptcha-container"></div> 
         <div class="info-box">
             <div class="label">ජයග්‍රහණ ගණන</div>
             <div class="value">05</div>
@@ -93,6 +103,48 @@
         <div class="nav-item" onclick="window.location.href='notifications.html'"><span class="nav-icon">🔔</span>දැනුම්දීම්</div>
         <div class="nav-item active" onclick="window.location.href='profile.html'"><span class="nav-icon">👤</span>පැතිකඩ</div>
     </div>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
+<script>
+    var confirmationResult;
+
+    // පිටුව Load වෙද්දීම Recaptcha සූදානම් කිරීම
+    window.onload = function() {
+        if (!window.recaptchaVerifier) {
+            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                'size': 'invisible'
+            });
+        }
+    };
+
+    function sendOTP() {
+        const phoneNumber = document.getElementById('phone-number').value;
+        const appVerifier = window.recaptchaVerifier;
+
+        firebase.auth().signInWithPhoneNumber(phoneNumber, appVerifier)
+            .then((result) => {
+                confirmationResult = result;
+                alert("Code එක ඔයාගේ Phone එකට එවුවා!");
+                document.getElementById('otp-section').style.display = 'block';
+            }).catch((error) => {
+                alert("දෝෂයක්: " + error.message);
+            });
+    }
+
+    function verifyOTP() {
+        const code = document.getElementById('verification-code').value;
+
+        confirmationResult.confirm(code).then((result) => {
+            alert("සාර්ථකව Verify වුණා!");
+            document.getElementById('phone-container').innerHTML = '<div class="value">' + result.user.phoneNumber + '</div>';
+            document.getElementById('otp-section').style.display = 'none';
+        }).catch((error) => {
+            alert("වැරදි Code එකක්. ආයෙත් උත්සාහ කරන්න.");
+        });
+    }
+</script>
+
+</body> </html>
 </body>
 </html>
