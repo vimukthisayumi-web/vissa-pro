@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VISSA PRO - Dashboard</title>
+    <style>
+        
+        body { font-family: 'Segoe UI', sans-serif; background: radial-gradient(circle, #1a1a4f 0%, #08051a 100%); color: white; margin: 0; padding-bottom: 80px; overflow-x: hidden; }
+        
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 45px; height: 45px; background: orange; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; }
+        .wallet { background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px; border: 1px solid gold; cursor: pointer; }
+
+        /* News Box */
+        .news-box { background: rgba(136, 0, 0, 0.3); border-radius: 15px; margin: 15px; padding: 15px; border: 1px solid rgba(255,0,0,0.2); font-size: 12px; }
+
+        /* Game Card */
+        .game-card { background: url('https://w0.peakpx.com/wallpaper/724/160/HD-wallpaper-carrom-board.jpg') center; background-size: cover; border-radius: 20px; margin: 15px; height: 200px; position: relative; border: 2px solid gold; overflow: hidden; }
+        .card-overlay { background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding: 15px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+        .play-btn { background: linear-gradient(45deg, #f90, #f00); color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: bold; cursor: pointer; align-self: flex-end; }
+
+        /* Popup Modal */
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
+        .modal-content { background: #1a1a4f; margin: 30% auto; padding: 20px; border: 2px solid gold; width: 80%; border-radius: 20px; text-align: center; }
+        .mode-option { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 12px; cursor: pointer; color: white; }
+        .online { background: linear-gradient(to right, #00c6ff, #0072ff); }
+        .practice { background: linear-gradient(to right, #56ab2f, #a8e063); }
+
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: #100a2e; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; }
+        .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; }
+        .nav-item.active { color: gold; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="user-info">
+            <div class="avatar">V</div>
+            <div>
+                <div style="font-size: 10px; color:#aaa;">Welcome Back</div>
+                <div style="font-size: 15px; font-weight:bold;">Vimukthi Thuhina</div>
+            </div>
+        </div>
+        <div class="wallet" onclick="goToPage('wallet.html')">
+            <span style="color:gold; font-weight:bold;">LKR 0</span>
+            <span style="background:green; border-radius:50%; padding:0 5px;">+</span>
+        </div>
+    </div>
+
+    <div class="news-box">
+        <b style="color:red;">IMPORTANT:</b> ගේම් එක මැදදී ඉවත් නොවන්න.
+    </div>
+
+    <div class="game-card">
+        <div class="card-overlay">
+            <div style="font-size:24px; font-weight:bold;">CARROM PRO</div>
+            <button class="play-btn" onclick="showModal()">PLAY NOW</button>
+        </div>
+    </div>
+
+    <div id="gameModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color:gold; margin-top:0;">SELECT MODE</h3>
+            <div class="mode-option online" onclick="goToPage('carrom_online.html')">
+                <div style="font-size:25px; margin-right:15px;">🌐</div>
+                <div style="text-align:left;"><b>PLAY ONLINE</b></div>
+            </div>
+            <div class="mode-option practice" onclick="goToPage('carrom_practice.html')">
+                <div style="font-size:25px; margin-right:15px;">🎓</div>
+                <div style="text-align:left;"><b>FREE PRACTICE</b></div>
+            </div>
+            <button style="background:none; border:none; color:white;" onclick="closeModal()">CANCEL</button>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="goToPage('dashboard.html')">🏠<br>මුල් පිටුව</div>
+        <div class="nav-item" onclick="goToPage('wallet.html')">👜<br>පසුම්බිය</div>
+        <div class="nav-item" onclick="window.location.href='events.html'">🏆<br>සිදුවීම්</div>
+        <div class="nav-item" onclick="window.location.href='notifications.html'">🔔<br>දැනුම්දීම්</div>
+        <div class="nav-item" onclick="window.location.href='profile.html'">👤<br>පැතිකඩ</div>
+    </div>
+
+    <script>
+        // පිටු අතර මාරු වීමට භාවිතා කරන සරල Function එක
+        function goToPage(pageName) {
+            window.location.href = pageName;
+        }
+
+        function showModal() {
+            document.getElementById('gameModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('gameModal').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
