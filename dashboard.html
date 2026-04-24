@@ -18,9 +18,9 @@
 
         .wallet { background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px; border: 1px solid gold; cursor: pointer; }
 
-        /* Game Card - ඉත්තන් සහිත Carrom Board පින්තූරය */
+        /* Game Card - මෙන්න මෙතන මම අලුත් පින්තූර ලින්ක් එකක් දැම්මා */
         .game-card { 
-            background: url('https://img.freepik.com/premium-photo/carrom-board-game-with-pieces-striker-placed-it_914562-430.jpg') center; 
+            background: #1a1a4f url('https://play-movies.googleusercontent.com/vx_S_0QYJ5bK_g950vEa4vO0G5gL6yP2E8wGk8D0A5T5n0Y1vJg5N3e5N2wD2Q') center; 
             background-size: cover; 
             border-radius: 25px; 
             margin: 15px; 
@@ -30,8 +30,9 @@
             overflow: hidden;
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
+        
         .card-overlay { 
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent); 
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 20%, transparent); 
             padding: 20px; 
             height: 100%; 
             display: flex; 
@@ -47,12 +48,18 @@
             border-radius: 50px; 
             font-weight: bold; 
             cursor: pointer; 
-            margin-bottom: 20px; /* Play button එක පොඩ්ඩක් උඩට ගත්තා */
+            margin-bottom: 20px; /* Play button එක පොඩ්ඩක් උඩට */
             box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4);
             transition: 0.3s;
         }
+        .play-btn:active { transform: scale(0.9); }
 
-        /* Bottom Nav */
+        /* Modal, Bottom Nav, and Scripts (කලින් තිබූ පරිදිමයි) */
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
+        .modal-content { background: #1a1a4f; margin: 30% auto; padding: 20px; border: 2px solid gold; width: 80%; border-radius: 20px; text-align: center; }
+        .mode-option { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 12px; cursor: pointer; color: white; }
+        .online { background: linear-gradient(to right, #00c6ff, #0072ff); }
+        .practice { background: linear-gradient(to right, #56ab2f, #a8e063); }
         .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: #100a2e; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000;}
         .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; text-decoration: none; flex: 1;}
         .nav-item.active { color: gold; }
@@ -77,15 +84,23 @@
 
     <div class="game-card">
         <div class="card-overlay">
+            <div style="font-size:20px; font-weight:bold; margin-bottom: 10px; text-shadow: 2px 2px 5px black;">CARROM POOL PRO</div>
             <button class="play-btn" onclick="showModal()">PLAY NOW</button>
         </div>
     </div>
 
-    <div id="gameModal" style="display:none; position:fixed; z-index:100; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(5px);">
-        <div style="background:#1a1a4f; margin:30% auto; padding:20px; border:2px solid gold; width:80%; border-radius:20px; text-align:center;">
-            <h3 style="color:gold;">SELECT MODE</h3>
-            <div style="background:linear-gradient(to right, #00c6ff, #0072ff); padding:15px; margin-bottom:10px; border-radius:12px; cursor:pointer;" onclick="goToPage('carrom_online.html')">PLAY ONLINE</div>
-            <div style="background:linear-gradient(to right, #56ab2f, #a8e063); padding:15px; border-radius:12px; cursor:pointer;" onclick="goToPage('carrom_practice.html')">FREE PRACTICE</div>
+    <div id="gameModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color:gold; margin-top:0;">SELECT MODE</h3>
+            <div class="mode-option online" onclick="goToPage('carrom_online.html')">
+                <div style="font-size:25px; margin-right:15px;">🌐</div>
+                <div style="text-align:left;"><b>PLAY ONLINE</b></div>
+            </div>
+            <div class="mode-option practice" onclick="goToPage('carrom_practice.html')">
+                <div style="font-size:25px; margin-right:15px;">🎓</div>
+                <div style="text-align:left;"><b>FREE PRACTICE</b></div>
+            </div>
+            <button style="background:none; border:none; color:white; margin-top: 10px;" onclick="closeModal()">CANCEL</button>
         </div>
     </div>
 
@@ -100,7 +115,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
@@ -112,22 +126,25 @@
             measurementId: "G-KCKJLGX5J5"
         };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        firebase.auth().onAuthStateChanged((user) => {
+        auth.onAuthStateChanged((user) => {
             if (user) {
                 document.getElementById('user-uid').innerText = "UID: " + user.uid;
                 if (user.photoURL) document.getElementById('avatar-container').innerHTML = `<img src="${user.photoURL}">`;
-                firebase.firestore().collection("users").doc(user.uid).get().then((doc) => {
+                db.collection("users").doc(user.uid).get().then((doc) => {
                     document.getElementById('user-name').innerText = (doc.exists && doc.data().username) ? doc.data().username : user.displayName;
                 });
             } else window.location.href = "index.html";
         });
 
         function copyUID() {
-            navigator.clipboard.writeText(firebase.auth().currentUser.uid).then(() => alert("UID Copy වුණා!"));
+            navigator.clipboard.writeText(auth.currentUser.uid).then(() => alert("User ID එක පිටපත් කරගත්තා! ✅"));
         }
         function goToPage(p) { window.location.href = p; }
         function showModal() { document.getElementById('gameModal').style.display = 'block'; }
+        function closeModal() { document.getElementById('gameModal').style.display = 'none'; }
     </script>
 </body>
 </html>
