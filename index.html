@@ -16,7 +16,6 @@
             justify-content: center;
             min-height: 100vh;
         }
-
         /* පසුබිමේ තරු */
         .stars {
             position: fixed;
@@ -26,7 +25,6 @@
             box-shadow: 10vw 20vh 1px #fff, 50vw 40vh 1px #fff, 80vw 10vh 1px #fff, 20vw 80vh 1px #fff, 70vw 70vh 1px #fff;
             opacity: 0.3;
         }
-
         /* Game Icon එක */
         .game-logo {
             width: 100px;
@@ -40,7 +38,6 @@
             box-shadow: 0 0 20px #ffcc00;
             border: 4px solid white;
         }
-
         .login-box { 
             background: rgba(255, 255, 255, 0.05); 
             padding: 30px; 
@@ -51,10 +48,8 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-
         h1 { font-size: 24px; margin-bottom: 10px; color: #fff; text-shadow: 0 0 10px #fff; }
         p { color: #ccc; font-size: 14px; margin-bottom: 30px; }
-
         .google-btn { 
             width: 100%; 
             padding: 15px; 
@@ -71,40 +66,74 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
+            cursor: pointer; /* Click කළ හැකි බව පෙන්වීමට */
         }
-
         @keyframes moveGradient {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
-        .footer-links { margin-top: 30px; font-size: 12px; color: #888; }
+        .footer-links { margin-top: 30px; font-size: 12px; color: #888; text-align: center; }
         .footer-links span { color: #ffcc00; text-decoration: underline; cursor: pointer; }
     </style>
 </head>
 <body>
-
     <div class="stars"></div>
-
     <div class="game-logo">
         <span style="font-size: 50px;">🎮</span>
     </div>
-
     <h1>VISSA PRO</h1>
     <p>ඔබේ ක්‍රීඩාව තෝරන්න</p>
-
     <div class="login-box">
-        <button class="google-btn">
+        <button class="google-btn" id="googleLoginBtn">
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20" style="background:white; border-radius:50%; padding:2px;">
             LOGIN WITH GOOGLE
         </button>
     </div>
-
     <div class="footer-links">
         By continuing you agree to our <br>
         <span>TERMS</span> & <span>PRIVACY POLICY</span>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script>
+        // ඔබේ Firebase Configuration එක
+        const firebaseConfig = {
+            apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
+            authDomain: "vissaprocarrom.firebaseapp.com",
+            projectId: "vissaprocarrom",
+            storageBucket: "vissaprocarrom.firebasestorage.app",
+            messagingSenderId: "722305696915",
+            appId: "1:722305696915:web:056e8be25a245ac29c7966",
+            measurementId: "G-KCKJLGX5J5"
+        };
+
+        // Firebase initialize කිරීම
+        firebase.initializeApp(firebaseConfig);
+
+        // Google Auth Provider එක සකස් කිරීම
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        // බොත්තම එබූ විට සිදුවන දේ
+        document.getElementById('googleLoginBtn').addEventListener('click', () => {
+            firebase.auth().signInWithPopup(provider)
+                .then((result) => {
+                    // සාර්ථකව Login වූ පසු පරිශීලකයාගේ තොරතුරු මෙතැනින් ගත හැක
+                    const user = result.user;
+                    console.log("Logged in user:", user.displayName);
+                    alert("ආයුබෝවන් " + user.displayName + "! සාර්ථකව ඇතුළු වුණා.");
+                    
+                    // මෙතැනින් පසු ඔබට වෙනත් පිටුවකට (Dashboard) යොමු කළ හැක
+                    // window.location.href = "dashboard.html";
+                })
+                .catch((error) => {
+                    // දෝෂයක් ඇති වුවහොත් පෙන්වීම
+                    console.error("Login Error:", error.message);
+                    alert("Login අසාර්ථකයි: " + error.message);
+                });
+        });
+    </script>
 </body>
 </html>
