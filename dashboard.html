@@ -5,33 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VISSA PRO - Dashboard</title>
     <style>
-        
         body { font-family: 'Segoe UI', sans-serif; background: radial-gradient(circle, #1a1a4f 0%, #08051a 100%); color: white; margin: 0; padding-bottom: 80px; overflow-x: hidden; }
         
         /* Header */
         .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; }
         .user-info { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 45px; height: 45px; background: orange; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; }
+        .avatar { width: 45px; height: 45px; background: orange; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden; border: 2px solid gold; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* UID Styling */
+        #user-uid { font-size: 10px; color: gold; cursor: pointer; background: rgba(255,215,0,0.1); padding: 2px 6px; border-radius: 4px; border: 0.5px dashed gold; display: inline-block; margin-top: 2px; }
+
         .wallet { background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px; border: 1px solid gold; cursor: pointer; }
 
-        /* News Box */
-        .news-box { background: rgba(136, 0, 0, 0.3); border-radius: 15px; margin: 15px; padding: 15px; border: 1px solid rgba(255,0,0,0.2); font-size: 12px; }
-
-        /* Game Card */
-        .game-card { background: url('https://w0.peakpx.com/wallpaper/724/160/HD-wallpaper-carrom-board.jpg') center; background-size: cover; border-radius: 20px; margin: 15px; height: 200px; position: relative; border: 2px solid gold; overflow: hidden; }
-        .card-overlay { background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding: 15px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
-        .play-btn { background: linear-gradient(45deg, #f90, #f00); color: white; border: none; padding: 10px 25px; border-radius: 50px; font-weight: bold; cursor: pointer; align-self: flex-end; }
-
-        /* Popup Modal */
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
-        .modal-content { background: #1a1a4f; margin: 30% auto; padding: 20px; border: 2px solid gold; width: 80%; border-radius: 20px; text-align: center; }
-        .mode-option { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 12px; cursor: pointer; color: white; }
-        .online { background: linear-gradient(to right, #00c6ff, #0072ff); }
-        .practice { background: linear-gradient(to right, #56ab2f, #a8e063); }
+        /* Game Card - ඉත්තන් සහිත Carrom Board පින්තූරය */
+        .game-card { 
+            background: url('https://img.freepik.com/premium-photo/carrom-board-game-with-pieces-striker-placed-it_914562-430.jpg') center; 
+            background-size: cover; 
+            border-radius: 25px; 
+            margin: 15px; 
+            height: 220px; 
+            position: relative; 
+            border: 3px solid gold; 
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .card-overlay { 
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 20%, transparent); 
+            padding: 20px; 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-end; 
+            align-items: center;
+        }
+        .play-btn { 
+            background: linear-gradient(45deg, #ffcc00, #ff6600); 
+            color: black; 
+            border: none; 
+            padding: 12px 40px; 
+            border-radius: 50px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-bottom: 20px; /* Play button එක පොඩ්ඩක් උඩට ගත්තා */
+            box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4);
+            transition: 0.3s;
+        }
 
         /* Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: #100a2e; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; }
-        .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; }
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: #100a2e; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000;}
+        .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; text-decoration: none; flex: 1;}
         .nav-item.active { color: gold; }
     </style>
 </head>
@@ -39,92 +62,72 @@
 
     <div class="header">
         <div class="user-info">
-            <div class="avatar">V</div>
+            <div class="avatar" id="avatar-container">V</div>
             <div>
-                <div style="font-size: 10px; color:#aaa;">Welcome Back</div>
-                <div style="font-size: 15px; font-weight:bold;"<h2 id="user-name">Loading...</h2></div>
+                <div style="font-size: 10px; color:#aaa;">Welcome Back,</div>
+                <div id="user-name" style="font-size: 16px; font-weight:bold; color: white;">Loading...</div>
+                <div id="user-uid" onclick="copyUID()">UID: Loading...</div>
             </div>
         </div>
         <div class="wallet" onclick="goToPage('wallet.html')">
-            <span style="color:gold; font-weight:bold;">LKR 0</span>
-            <span style="background:green; border-radius:50%; padding:0 5px;">+</span>
+            <span id="wallet-balance" style="color:gold; font-weight:bold;">LKR 0</span>
+            <span style="background:green; border-radius:50%; padding:0 5px; color: white;">+</span>
         </div>
-    </div>
-
-    <div class="news-box">
-        <b style="color:red;">IMPORTANT:</b> ගේම් එක මැදදී ඉවත් නොවන්න.
     </div>
 
     <div class="game-card">
         <div class="card-overlay">
-            <div style="font-size:24px; font-weight:bold;">CARROM PRO</div>
             <button class="play-btn" onclick="showModal()">PLAY NOW</button>
         </div>
     </div>
 
-    <div id="gameModal" class="modal">
-        <div class="modal-content">
-            <h3 style="color:gold; margin-top:0;">SELECT MODE</h3>
-            <div class="mode-option online" onclick="goToPage('carrom_online.html')">
-                <div style="font-size:25px; margin-right:15px;">🌐</div>
-                <div style="text-align:left;"><b>PLAY ONLINE</b></div>
-            </div>
-            <div class="mode-option practice" onclick="goToPage('carrom_practice.html')">
-                <div style="font-size:25px; margin-right:15px;">🎓</div>
-                <div style="text-align:left;"><b>FREE PRACTICE</b></div>
-            </div>
-            <button style="background:none; border:none; color:white;" onclick="closeModal()">CANCEL</button>
+    <div id="gameModal" style="display:none; position:fixed; z-index:100; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(5px);">
+        <div style="background:#1a1a4f; margin:30% auto; padding:20px; border:2px solid gold; width:80%; border-radius:20px; text-align:center;">
+            <h3 style="color:gold;">SELECT MODE</h3>
+            <div style="background:linear-gradient(to right, #00c6ff, #0072ff); padding:15px; margin-bottom:10px; border-radius:12px; cursor:pointer;" onclick="goToPage('carrom_online.html')">PLAY ONLINE</div>
+            <div style="background:linear-gradient(to right, #56ab2f, #a8e063); padding:15px; border-radius:12px; cursor:pointer;" onclick="goToPage('carrom_practice.html')">FREE PRACTICE</div>
         </div>
     </div>
 
     <div class="bottom-nav">
         <div class="nav-item active" onclick="goToPage('dashboard.html')">🏠<br>මුල් පිටුව</div>
         <div class="nav-item" onclick="goToPage('wallet.html')">👜<br>පසුම්බිය</div>
-        <div class="nav-item" onclick="window.location.href='events.html'">🏆<br>සිදුවීම්</div>
-        <div class="nav-item" onclick="window.location.href='notifications.html'">🔔<br>දැනුම්දීම්</div>
-        <div class="nav-item" onclick="window.location.href='profile.html'">👤<br>පැතිකඩ</div>
+        <div class="nav-item" onclick="goToPage('events.html')">🏆<br>සිදුවීම්</div>
+        <div class="nav-item" onclick="goToPage('notifications.html')">🔔<br>දැනුම්දීම්</div>
+        <div class="nav-item" onclick="goToPage('profile.html')">👤<br>පැතිකඩ</div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
     <script>
-        // පිටු අතර මාරු වීමට භාවිතා කරන සරල Function එක
-        function goToPage(pageName) {
-            window.location.href = pageName;
-        }
+        const firebaseConfig = {
+            apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
+            authDomain: "vissaprocarrom.firebaseapp.com",
+            projectId: "vissaprocarrom",
+            storageBucket: "vissaprocarrom.firebasestorage.app",
+            messagingSenderId: "722305696915",
+            appId: "1:722305696915:web:056e8be25a245ac29c7966",
+            measurementId: "G-KCKJLGX5J5"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-        function showModal() {
-            document.getElementById('gameModal').style.display = 'block';
-        }
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                document.getElementById('user-uid').innerText = "UID: " + user.uid;
+                if (user.photoURL) document.getElementById('avatar-container').innerHTML = `<img src="${user.photoURL}">`;
+                firebase.firestore().collection("users").doc(user.uid).get().then((doc) => {
+                    document.getElementById('user-name').innerText = (doc.exists && doc.data().username) ? doc.data().username : user.displayName;
+                });
+            } else window.location.href = "index.html";
+        });
 
-        function closeModal() {
-            document.getElementById('gameModal').style.display = 'none';
+        function copyUID() {
+            navigator.clipboard.writeText(firebase.auth().currentUser.uid).then(() => alert("UID Copy වුණා!"));
         }
+        function goToPage(p) { window.location.href = p; }
+        function showModal() { document.getElementById('gameModal').style.display = 'block'; }
     </script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script>
-    // ඔබේ Firebase Config එක මෙතනටත් දාන්න
-    const firebaseConfig = {
-        apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
-        authDomain: "vissaprocarrom.firebaseapp.com",
-        projectId: "vissaprocarrom",
-        // ... ඉතිරි ටිකත් දාන්න
-    };
-
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
-
-    // පරිශීලකයා ලොගින් වී ඇත්දැයි පරීක්ෂා කර නම පෙන්වීම
-    firebase.auth().onAuthStateChanged((user) => {
-        if (user) {
-            // Google එකේ තියෙන නම මෙතනට වැටෙනවා
-            document.getElementById('user-name').innerText = user.displayName;
-        } else {
-            // ලොගින් වෙලා නැත්නම් ආපහු login පිටුවට යවනවා
-            window.location.href = "index.html";
-        }
-    });
-</script>
-
 </body>
 </html>
