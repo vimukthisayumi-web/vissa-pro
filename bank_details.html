@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Deposit - VISSA PRO</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #08051a; color: white; text-align: center; padding: 20px; 
+        }
+        .bank-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px; border-radius: 20px;
+            border: 1px solid #0cf; margin-top: 20px;
+            text-align: left;
+        }
+        .detail-row { margin-bottom: 12px; }
+        .label { color: #aaa; font-size: 11px; text-transform: uppercase; }
+        .value { font-size: 15px; font-weight: bold; color: gold; }
+        
+        input {
+            width: 90%; padding: 12px; margin: 8px 0;
+            border-radius: 10px; border: 1px solid #555;
+            background: rgba(255, 255, 255, 0.1); color: white;
+            outline: none;
+        }
+        
+        .confirm-btn {
+            background: linear-gradient(45deg, #00ff00, #008000);
+            color: black; border: none; padding: 15px; width: 100%;
+            border-radius: 15px; font-weight: bold; cursor: pointer; margin-top: 25px;
+        }
+        .confirm-btn:disabled { background: #555; }
+    </style>
+</head>
+<body>
+
+    <h2 style="color: #0cf;">බැංකු තැන්පතු (Bank Deposit)</h2>
+    <p style="font-size: 12px; color: #ccc;">පහත බැංකු ගිණුමට මුදල් තැන්පත් කර විස්තර ඇතුළත් කරන්න.</p>
+    
+    <div class="bank-card">
+        <div class="detail-row">
+            <div class="label">බැංකුවේ නම</div>
+            <div class="value">Commercial Bank</div>
+        </div>
+        <div class="detail-row">
+            <div class="label">ගිණුම් අංකය</div>
+            <div class="value">8028840493</div>
+        </div>
+        <div class="detail-row">
+            <div class="label">ගිණුම් හිමියා</div>
+            <div class="value">I P VIMUKTHI THUHINA WIJERATHNA</div>
+        </div>
+        <div class="detail-row">
+            <div class="label">ශාඛාව</div>
+            <div class="value">Veyangoda</div>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px; text-align: left;">
+        <label class="label">තැන්පත් කළ මුදල (LKR)</label>
+        <input type="number" id="dep-amount" placeholder="Rs. 1000">
+
+        <label class="label">රිසිට් පතේ අංකය / Reference No</label>
+        <input type="text" id="ref-no" placeholder="උදා: 12345678">
+
+        <button class="confirm-btn" id="submit-btn" onclick="submitBankDeposit()">විස්තර යොමු කරන්න</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        // ඔයාගේ Firebase Config එක මෙතන තියෙනවා
+        const firebaseConfig = {
+            apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
+            authDomain: "vissaprocarrom.firebaseapp.com",
+            projectId: "vissaprocarrom",
+            storageBucket: "vissaprocarrom.firebasestorage.app",
+            messagingSenderId: "722305696915",
+            appId: "1:722305696915:web:056e8be25a245ac29c7966"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const db = firebase.firestore();
+
+        function submitBankDeposit() {
+            const amount = document.getElementById('dep-amount').value;
+            const ref = document.getElementById('ref-no').value;
+            const btn = document.getElementById('submit-btn');
+            const user = firebase.auth().currentUser;
+
+            if (!user) { alert("කරුණාකර මුලින්ම ඇතුළු වන්න (Login)."); return; }
+            if (!amount || !ref) { alert("මුදල සහ රිසිට් අංකය ඇතුළත් කරන්න."); return; }
+
+            btn.innerText = "යොමු කරමින්...";
+            btn.disabled = true;
+
+            // Firestore එකේ 'deposits' කියන තැනට දත්ත යවනවා
+            db.collection("deposits").add({
+                uid: user.uid,
+                email: user.email,
+                amount: amount,
+                reference: ref,
+                method: "Bank Transfer",
+                status: "Pending",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                alert("සාර්ථකයි! පරීක්ෂා කිරීමෙන් පසු ඔබේ මුදල් Wallet එකට එකතු වේවි.");
+                window.location.href = "wallet.html";
+            }).catch((error) => {
+                alert("දෝෂයක්: " + error.message);
+                btn.innerText = "විස්තර යොමු කරන්න";
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
