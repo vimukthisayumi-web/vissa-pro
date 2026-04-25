@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <title>VISSA PRO - Waiting Room</title>
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 2s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .player-info { display: flex; gap: 50px; align-items: center; }
+        .vs { font-size: 40px; font-weight: bold; color: gold; }
+        .avatar { width: 80px; height: 80px; background: #333; border-radius: 50%; border: 3px solid white; }
+    </style>
+</head>
+<body>
+
+    <div class="loader"></div>
+    <h2 id="status">ප්‍රතිවාදියෙකු සොයමින්...</h2>
+
+    <div class="player-info">
+        <div id="player1">
+            <div class="avatar"></div>
+            <p>ඔබ</p>
+        </div>
+        <div class="vs">VS</div>
+        <div id="player2">
+            <div class="avatar" style="opacity: 0.3;"></div>
+            <p>???</p>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        // Firebase Config (ඔයාගේ කලින් එකම මෙතනට දාන්න)
+        const firebaseConfig = { /* ... */ };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const matchId = "ROOM_1"; // මේක dynamic විදිහට ගන්න පුළුවන්
+
+        function startMatchmaking() {
+            const matchRef = db.collection("active_matches").doc(matchId);
+
+            matchRef.onSnapshot((doc) => {
+                const data = doc.data();
+                
+                if (data && data.host && data.guest) {
+                    // දෙන්නාම ඉන්නවා! ගේම් එකට යමු.
+                    document.getElementById('status').innerText = "ප්‍රතිවාදියා හමුවුණා! සූදානම් වන්න...";
+                    setTimeout(() => {
+                        window.location.href = `game.html?matchId=${matchId}`;
+                    }, 2000);
+                } else if (data && data.host) {
+                    // දැනට ඉන්නේ host විතරයි
+                    document.getElementById('status').innerText = "ප්‍රතිවාදියෙකු එනතුරු බලා සිටී...";
+                }
+            });
+        }
+
+        startMatchmaking();
+    </script>
+</body>
+</html>
