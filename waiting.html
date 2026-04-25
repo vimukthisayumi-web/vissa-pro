@@ -65,56 +65,53 @@
 
         async function startMatchingProcess(myId) {
             const waitingRef = db.collection("waiting_players");
-
+            
             try {
-                // 1. මේ ගාස්තුවටම බලාගෙන ඉන්න වෙනත් කෙනෙක් ඉන්නවද බලන්න
-                const snapshot = await waitingRef
-                    .where("fee", "==", fee)
-                    .where("uid", "!=", myId)
-                    .limit(1)
-                    .get();
+                // 1. මේ Fee එකට ඉන්න අයව සෙවුම් කරනවා (සරල Query එකක්)
+                const snapshot = await waitingRef.where("fee", "==", fee).get();
+                
+                let found = false;
+                snapshot.forEach(doc => {
+                    // මම නොවන වෙනත් කෙනෙක් ඉන්නවද බලනවා
+                    if (doc.id !== myId && !found) {
+                        found = true;
+                        const opponentId = doc.id;
+                        
+                        // ප්‍රතිවාදියාගේ ID එක නමින් මැච් එකක් හදනවා
+                        db.collection("active_matches").doc(opponentId).set({
+                            player1: opponentId,
+                            player2: myId,
+                            fee: fee,
+                            status: "playing",
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }).then(() => {
+                            // ප්‍රතිවාදියාව ලයිස්තුවෙන් අයින් කරනවා
+                            waitingRef.doc(opponentId).delete();
+                            updateUIFound();
+                            goToGame(opponentId);
+                        });
+                    }
+                });
 
-                if (!snapshot.empty) {
-                    const opponent = snapshot.docs[0].data();
-                    const matchId = opponent.uid; // පරණ ප්ලේයර්ගේ ID එක මැච් ID එක ලෙස ගන්නවා
-
-                    // UI එක වෙනස් කරන්න
-                    updateUIFound();
-
-                    // මැච් එක සක්‍රීය කරන්න
-                    await db.collection("active_matches").doc(matchId).set({
-                        player1: opponent.uid,
-                        player2: myId,
-                        fee: fee,
-                        status: "playing",
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-
-                    // ප්‍රතිවාදියාව Waiting List එකෙන් ඉවත් කරන්න
-                    await waitingRef.doc(opponent.uid).delete();
-                    
-                    goToGame(matchId);
-                } else {
-                    // කෙනෙක් නැතිනම් මාව ලිස්ට් එකට එකතු කරන්න
+                if (!found) {
+                    // කෙනෙක් නැතිනම් මාව ලයිස්තුවට දානවා
                     await waitingRef.doc(myId).set({
                         uid: myId,
                         fee: fee,
-                        time: Date.now()
+                        time: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
-                    // කවුරුහරි මාව සම්බන්ධ කරනකම් බලාගෙන ඉන්න
+                    // වෙන කෙනෙක් මාව ගේම් එකට ගන්නකල් බලාගෙන ඉන්නවා
                     db.collection("active_matches").doc(myId).onSnapshot(doc => {
                         if (doc.exists) {
                             updateUIFound();
                             goToGame(myId);
                         }
-                    }, error => {
-                        console.error("Snapshot error:", error);
                     });
                 }
             } catch (err) {
                 console.error("Matchmaking error:", err);
-                alert("දත්ත දෝෂයක්! කරුණාකර නැවත උත්සාහ කරන්න.");
+                alert("දත්ත දෝෂයක්! කරුණාකර පිටුව Refresh කරන්න.");
             }
         }
 
