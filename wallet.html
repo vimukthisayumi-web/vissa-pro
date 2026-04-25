@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wallet - VISSA PRO</title>
     <style>
-        /* මූලික පෙනුම */
         body { 
             font-family: 'Segoe UI', sans-serif; 
             background: radial-gradient(circle, #1a1a4f 0%, #08051a 100%); 
@@ -35,8 +34,31 @@
         .deposit { background: linear-gradient(45deg, #00b09b, #96c93d); }
         .withdraw { background: linear-gradient(45deg, #f83600, #f9d423); }
 
+        /* ගනුදෙනු ඉතිහාසය Styles */
         .history-title { font-size: 17px; border-left: 4px solid #0cf; padding-left: 10px; margin-bottom: 15px; }
-        .history-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .history-item { 
+            background: rgba(255,255,255,0.05); 
+            padding: 15px; 
+            border-radius: 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 12px; 
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .type-tag { font-size: 10px; text-transform: uppercase; font-weight: bold; margin-bottom: 4px; display: block; }
+        .deposit-text { color: #00ffcc; }
+        .withdraw-text { color: #ff4d4d; }
+        
+        .status-badge { 
+            padding: 5px 10px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: bold; 
+        }
+        .pending { background: #ff9800; color: #000; }
+        .success { background: #4caf50; color: #fff; }
+        .rejected { background: #f44336; color: #fff; }
 
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: #100a2e; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000; }
         .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; flex: 1; text-decoration: none; }
@@ -65,15 +87,9 @@
         </button>
     </div>
 
-    <div class="history-title">ගනුදෙනු විස්තර (History)</div>
+    <div class="history-title">ගනුදෙනු ඉතිහාසය (History)</div>
     <div id="history-list">
-        <div class="history-item">
-            <div style="display:flex; flex-direction:column;">
-                <span style="font-weight:bold; font-size:14px;">Welcome Bonus</span>
-                <span style="font-size:11px; color:#888;">ලියාපදිංචි වූ විට</span>
-            </div>
-            <div style="color:#0f0; font-weight:bold;">+ LKR 0.00</div>
-        </div>
+        <p style="text-align:center; color:#666; font-size:12px;">ගනුදෙනු පරීක්ෂා කරමින්...</p>
     </div>
 
     <div class="bottom-nav">
@@ -103,18 +119,79 @@
 
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // සජීවීව බැලන්ස් එක පරීක්ෂා කිරීම (onSnapshot)
+                // 1. සජීවීව බැලන්ස් එක පරීක්ෂා කිරීම
                 db.collection("users").doc(user.uid).onSnapshot((doc) => {
                     if (doc.exists && doc.data().balance !== undefined) {
                         document.getElementById('wallet-balance').innerText = doc.data().balance.toFixed(2);
-                    } else {
-                        document.getElementById('wallet-balance').innerText = "0.00";
                     }
                 });
+
+                // 2. ගනුදෙනු ඉතිහාසය පෙන්වීම
+                loadHistory(user.uid);
             } else {
                 window.location.href = "index.html";
             }
         });
+
+        function loadHistory(uid) {
+            const historyList = document.getElementById('history-list');
+
+            // Deposits සහ Withdrawals යන දෙකම එකවර පරීක්ෂා කිරීම
+            // මුලින්ම Deposits ලබාගැනීම
+            db.collection("deposits").where("uid", "==", uid).orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+                renderHistory(uid);
+            });
+
+            db.collection("withdrawals").where("uid", "==", uid).orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+                renderHistory(uid);
+            });
+        }
+
+        async function renderHistory(uid) {
+            const historyList = document.getElementById('history-list');
+            let combinedHistory = [];
+
+            // Deposits දත්ත ලබාගැනීම
+            const depSnap = await db.collection("deposits").where("uid", "==", uid).get();
+            depSnap.forEach(doc => {
+                combinedHistory.push({ ...doc.data(), type: 'Deposit' });
+            });
+
+            // Withdrawals දත්ත ලබාගැනීම
+            const withSnap = await db.collection("withdrawals").where("uid", "==", uid).get();
+            withSnap.forEach(doc => {
+                combinedHistory.push({ ...doc.data(), type: 'Withdraw' });
+            });
+
+            // දිනය අනුව අලුත් ඒවා උඩට එන ලෙස සකස් කිරීම
+            combinedHistory.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+            if (combinedHistory.length === 0) {
+                historyList.innerHTML = '<p style="text-align:center; color:#666; font-size:12px;">තවමත් ගනුදෙනු සිදුකර නොමැත.</p>';
+                return;
+            }
+
+            historyList.innerHTML = "";
+            combinedHistory.forEach(item => {
+                const isDeposit = item.type === 'Deposit';
+                const sign = isDeposit ? "+" : "-";
+                const colorClass = isDeposit ? "deposit-text" : "withdraw-text";
+                const statusClass = item.status === 'pending' ? 'pending' : (item.status === 'completed' ? 'success' : 'rejected');
+                const statusLabel = item.status === 'pending' ? 'PENDING' : (item.status === 'completed' ? 'SUCCESS' : 'REJECTED');
+
+                historyList.innerHTML += `
+                    <div class="history-item">
+                        <div>
+                            <span class="type-tag ${colorClass}">${item.type}</span>
+                            <span style="font-weight:bold; font-size:15px; color:${isDeposit ? '#0f0' : '#f44'};">
+                                ${sign} LKR ${parseFloat(item.amount).toFixed(2)}
+                            </span>
+                        </div>
+                        <div class="status-badge ${statusClass}">${statusLabel}</div>
+                    </div>
+                `;
+            });
+        }
     </script>
 </body>
 </html>
