@@ -29,18 +29,24 @@
         }
         .card-overlay { background: linear-gradient(to top, rgba(0,0,0,0.8) 20%, transparent); padding: 20px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
         .play-btn { background: linear-gradient(45deg, #ffcc00, #ff6600); color: black; border: none; padding: 12px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4); transition: 0.3s; }
-        .play-btn:active { transform: scale(0.9); }
+
+        /* Modal */
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
+        .modal-content { background: #1a1a4f; margin: 15% auto; padding: 20px; border: 2px solid gold; width: 85%; border-radius: 20px; text-align: center; max-height: 80vh; overflow-y: auto; }
+        .mode-option { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 12px; cursor: pointer; color: white; }
+        .online { background: linear-gradient(to right, #00c6ff, #0072ff); }
+        .practice { background: linear-gradient(to right, #56ab2f, #a8e063); }
+
+        /* Room Design */
+        .room-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,215,0,0.2); }
+        .room-price { color: gold; font-weight: bold; font-size: 16px; }
+        .room-win { color: #00ffcc; font-size: 11px; }
+        .join-btn { background: gold; color: black; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
 
         /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: #100a2e; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000;}
         .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; text-decoration: none; flex: 1;}
         .nav-item.active { color: gold; }
-        
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
-        .modal-content { background: #1a1a4f; margin: 30% auto; padding: 20px; border: 2px solid gold; width: 80%; border-radius: 20px; text-align: center; }
-        .mode-option { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 12px; cursor: pointer; color: white; }
-        .online { background: linear-gradient(to right, #00c6ff, #0072ff); }
-        .practice { background: linear-gradient(to right, #56ab2f, #a8e063); }
     </style>
 </head>
 <body>
@@ -64,16 +70,60 @@
     <div class="game-card">
         <div class="card-overlay">
             <div style="font-size:20px; font-weight:bold; margin-bottom: 10px; text-shadow: 2px 2px 5px black;">CARROM POOL PRO</div>
-            <button class="play-btn" onclick="showModal()">PLAY NOW</button>
+            <button class="play-btn" onclick="showModal('gameModal')">PLAY NOW</button>
         </div>
     </div>
 
     <div id="gameModal" class="modal">
         <div class="modal-content">
             <h3 style="color:gold; margin-top:0;">SELECT MODE</h3>
-            <div class="mode-option online" onclick="goToPage('carrom_online.html')">🌐 <b style="margin-left:15px;">PLAY ONLINE</b></div>
+            <div class="mode-option online" onclick="openRooms()">🌐 <b style="margin-left:15px;">PLAY ONLINE</b></div>
             <div class="mode-option practice" onclick="goToPage('carrom_practice.html')">🎓 <b style="margin-left:15px;">FREE PRACTICE</b></div>
-            <button style="background:none; border:none; color:white; margin-top: 10px;" onclick="closeModal()">CANCEL</button>
+            <button style="background:none; border:none; color:white; margin-top: 10px;" onclick="closeModal('gameModal')">CANCEL</button>
+        </div>
+    </div>
+
+    <div id="roomModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color:gold; margin-top:0;">CHOOSE A ROOM</h3>
+            <div id="rooms-list">
+                <div class="room-card">
+                    <div style="text-align:left;">
+                        <div class="room-price">LKR 100</div>
+                        <div class="room-win">Win: LKR 180</div>
+                    </div>
+                    <button class="join-btn" onclick="joinRoom(100, 180)">JOIN</button>
+                </div>
+                <div class="room-card">
+                    <div style="text-align:left;">
+                        <div class="room-price">LKR 300</div>
+                        <div class="room-win">Win: LKR 540</div>
+                    </div>
+                    <button class="join-btn" onclick="joinRoom(300, 540)">JOIN</button>
+                </div>
+                <div class="room-card">
+                    <div style="text-align:left;">
+                        <div class="room-price">LKR 500</div>
+                        <div class="room-win">Win: LKR 900</div>
+                    </div>
+                    <button class="join-btn" onclick="joinRoom(500, 900)">JOIN</button>
+                </div>
+                <div class="room-card">
+                    <div style="text-align:left;">
+                        <div class="room-price">LKR 1000</div>
+                        <div class="room-win">Win: LKR 1800</div>
+                    </div>
+                    <button class="join-btn" onclick="joinRoom(1000, 1800)">JOIN</button>
+                </div>
+                <div class="room-card">
+                    <div style="text-align:left;">
+                        <div class="room-price">LKR 1500</div>
+                        <div class="room-win">Win: LKR 2700</div>
+                    </div>
+                    <button class="join-btn" onclick="joinRoom(1500, 2700)">JOIN</button>
+                </div>
+            </div>
+            <button style="background:none; border:none; color:white; margin-top: 15px;" onclick="closeModal('roomModal')">BACK</button>
         </div>
     </div>
 
@@ -101,31 +151,76 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        let userCurrentBalance = 0;
+
         auth.onAuthStateChanged((user) => {
             if (user) {
                 document.getElementById('user-uid').innerText = "UID: " + user.uid;
                 if (user.photoURL) document.getElementById('avatar-container').innerHTML = `<img src="${user.photoURL}">`;
                 
-                db.collection("users").doc(user.uid).get().then((doc) => {
-                    document.getElementById('user-name').innerText = (doc.exists && doc.data().username) ? doc.data().username : user.displayName;
-                });
-
-                // --- මෙන්න මේ කොටස තමයි වැදගත්ම දේ ---
-                // බැලන්ස් එක ලයිව් අලුත් කරන කෝඩ් එක
                 db.collection("users").doc(user.uid).onSnapshot((doc) => {
-                    if (doc.exists && doc.data().balance !== undefined) {
-                        document.getElementById('user-balance').innerText = doc.data().balance;
-                    } else {
-                        document.getElementById('user-balance').innerText = "0";
+                    if (doc.exists) {
+                        userCurrentBalance = doc.data().balance || 0;
+                        document.getElementById('user-balance').innerText = userCurrentBalance;
+                        document.getElementById('user-name').innerText = doc.data().username || user.displayName;
                     }
                 });
             } else window.location.href = "index.html";
         });
 
+        function openRooms() {
+            closeModal('gameModal');
+            showModal('roomModal');
+        }
+
+        async function joinRoom(fee, winPrice) {
+            const user = auth.currentUser;
+            const serviceCharge = 10; // එක් ක්‍රීඩකයෙකුගෙන් රු. 10 බැගින් සේවා ගාස්තුව
+            const totalToPay = fee + serviceCharge;
+
+            if (userCurrentBalance < totalToPay) {
+                alert("ප්‍රමාණවත් මුදල් නොමැත! සේවා ගාස්තුව සමඟ රු. " + totalToPay + " ක් අවශ්‍යයි.");
+                return;
+            }
+
+            if (confirm(`රු. ${fee} ක තරඟයට රු. ${serviceCharge} ක සේවා ගාස්තුව සමඟ රු. ${totalToPay} ක් කැපීමට ඉඩ දෙන්නද?`)) {
+                try {
+                    const userRef = db.collection("users").doc(user.uid);
+                    
+                    await db.runTransaction(async (transaction) => {
+                        const userDoc = await transaction.get(userRef);
+                        const newBalance = userDoc.data().balance - totalToPay;
+                        
+                        // 1. පරිශීලකයාගේ බැලන්ස් එක අඩු කිරීම
+                        transaction.update(userRef, { balance: newBalance });
+
+                        // 2. ADMIN PANEL එකට දත්ත යැවීම (UID එක සමඟ)
+                        const matchRef = db.collection("active_matches").doc();
+                        transaction.set(matchRef, {
+                            player_uid: user.uid,
+                            player_name: userDoc.data().username || user.displayName,
+                            room_fee: fee,
+                            service_charge_collected: serviceCharge,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            status: "in_game"
+                        });
+                    });
+
+                    // Game එකට දත්ත රැගෙන යාම
+                    localStorage.setItem("matchFee", fee);
+                    localStorage.setItem("winPrice", winPrice);
+                    window.location.href = 'carrom_online.html';
+
+                } catch (e) {
+                    alert("දෝෂයක් සිදු විය: " + e.message);
+                }
+            }
+        }
+
         function copyUID() { navigator.clipboard.writeText(auth.currentUser.uid).then(() => alert("UID Copied!")); }
         function goToPage(p) { window.location.href = p; }
-        function showModal() { document.getElementById('gameModal').style.display = 'block'; }
-        function closeModal() { document.getElementById('gameModal').style.display = 'none'; }
+        function showModal(id) { document.getElementById(id).style.display = 'block'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     </script>
 </body>
 </html>
