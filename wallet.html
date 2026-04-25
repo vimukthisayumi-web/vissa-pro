@@ -12,28 +12,12 @@
             color: white; 
             margin: 0; 
             padding: 20px;
-            padding-bottom: 80px; /* පල්ලෙහා මෙනු එකට ඉඩ තැබීමට */
+            padding-bottom: 80px; 
         }
 
-        /* ඉහළ කොටස (Header) */
-        .wallet-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-        .back-btn {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: gold;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            font-size: 18px;
-            cursor: pointer;
-        }
+        .wallet-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+        .back-btn { background: rgba(255,255,255,0.1); border: none; color: gold; width: 35px; height: 35px; border-radius: 50%; font-size: 18px; cursor: pointer; }
 
-        /* සල්ලි පෙන්වන කාඩ් එක */
         .balance-card {
             background: linear-gradient(135deg, #2e2e8e 0%, #1a1a4f 100%);
             padding: 30px 20px;
@@ -46,71 +30,18 @@
         .balance-label { font-size: 14px; color: #aaa; margin-bottom: 10px; }
         .balance-amount { font-size: 36px; font-weight: bold; color: gold; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
 
-        /* Deposit & Withdraw බොත්තම් */
-        .action-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        .action-btn {
-            padding: 18px;
-            border-radius: 20px;
-            border: none;
-            color: white;
-            font-weight: bold;
-            font-size: 15px;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
+        .action-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        .action-btn { padding: 18px; border-radius: 20px; border: none; color: white; font-weight: bold; font-size: 15px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .deposit { background: linear-gradient(45deg, #00b09b, #96c93d); }
         .withdraw { background: linear-gradient(45deg, #f83600, #f9d423); }
 
-        /* ගනුදෙනු විස්තර (History) */
-        .history-title {
-            font-size: 17px;
-            border-left: 4px solid #0cf;
-            padding-left: 10px;
-            margin-bottom: 15px;
-        }
-        .history-item {
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
+        .history-title { font-size: 17px; border-left: 4px solid #0cf; padding-left: 10px; margin-bottom: 15px; }
+        .history-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 
-        /* --- පල්ලෙහා මෙනු එක (Bottom Navigation) --- */
-        .bottom-nav { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0;
-            width: 100%; 
-            height: 65px; 
-            background: #100a2e; 
-            display: flex; 
-            justify-content: space-around; 
-            align-items: center; 
-            border-top: 1px solid #333; 
-            z-index: 1000;
-        }
-        .nav-item { 
-            text-align: center; 
-            color: #888; 
-            font-size: 10px; 
-            cursor: pointer; 
-            flex: 1;
-            text-decoration: none;
-        }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: #100a2e; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000; }
+        .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; flex: 1; text-decoration: none; }
         .nav-item.active { color: gold; }
         .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
-
     </style>
 </head>
 <body>
@@ -122,46 +53,68 @@
 
     <div class="balance-card">
         <div class="balance-label">දැනට ඇති මුළු මුදල</div>
-        <div class="balance-amount">LKR 0.00</div>
+        <div class="balance-amount">LKR <span id="wallet-balance">0.00</span></div>
     </div>
 
     <div class="action-container">
         <button class="action-btn deposit" onclick="window.location.href='deposit.html'">
-            <span style="font-size:24px;">💰</span>
-            DEPOSIT
+            <span style="font-size:24px;">💰</span>DEPOSIT
         </button>
         <button class="action-btn withdraw" onclick="window.location.href='withdraw.html'">
-            <span style="font-size:24px;">💳</span>
-            WITHDRAW
+            <span style="font-size:24px;">💳</span>WITHDRAW
         </button>
     </div>
 
     <div class="history-title">ගනුදෙනු විස්තර (History)</div>
-    <div class="history-item">
-        <div style="display:flex; flex-direction:column;">
-            <span style="font-weight:bold; font-size:14px;">Welcome Bonus</span>
-            <span style="font-size:11px; color:#888;">අද, 10:30 AM</span>
+    <div id="history-list">
+        <div class="history-item">
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-weight:bold; font-size:14px;">Welcome Bonus</span>
+                <span style="font-size:11px; color:#888;">ලියාපදිංචි වූ විට</span>
+            </div>
+            <div style="color:#0f0; font-weight:bold;">+ LKR 0.00</div>
         </div>
-        <div style="color:#0f0; font-weight:bold;">+ LKR 0.00</div>
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item" onclick="window.location.href='dashboard.html'">
-            <span class="nav-icon">🏠</span>මුල් පිටුව
-        </div>
-        <div class="nav-item active" onclick="window.location.href='wallet.html'">
-            <span class="nav-icon">👜</span>පසුම්බිය
-        </div>
-        <div class="nav-item" onclick="window.location.href='events.html'">
-            <span class="nav-icon">🏆</span>සිදුවීම්
-        </div>
-        <div class="nav-item" onclick="window.location.href='notifications.html'">
-            <span class="nav-icon">🔔</span>දැනුම්දීම්
-        </div>
-        <div class="nav-item" onclick="window.location.href='profile.html'">
-            <span class="nav-icon">👤</span>පැතිකඩ
-        </div>
+        <a class="nav-item" href="dashboard.html"><span class="nav-icon">🏠</span>මුල් පිටුව</a>
+        <a class="nav-item active" href="wallet.html"><span class="nav-icon">👜</span>පසුම්බිය</a>
+        <a class="nav-item" href="events.html"><span class="nav-icon">🏆</span>සිදුවීම්</a>
+        <a class="nav-item" href="notifications.html"><span class="nav-icon">🔔</span>දැනුම්දීම්</a>
+        <a class="nav-item" href="profile.html"><span class="nav-icon">👤</span>පැතිකඩ</a>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
+            authDomain: "vissaprocarrom.firebaseapp.com",
+            projectId: "vissaprocarrom",
+            storageBucket: "vissaprocarrom.firebasestorage.app",
+            messagingSenderId: "722305696915",
+            appId: "1:722305696915:web:056e8be25a245ac29c7966"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // සජීවීව බැලන්ස් එක පරීක්ෂා කිරීම (onSnapshot)
+                db.collection("users").doc(user.uid).onSnapshot((doc) => {
+                    if (doc.exists && doc.data().balance !== undefined) {
+                        document.getElementById('wallet-balance').innerText = doc.data().balance.toFixed(2);
+                    } else {
+                        document.getElementById('wallet-balance').innerText = "0.00";
+                    }
+                });
+            } else {
+                window.location.href = "index.html";
+            }
+        });
+    </script>
 </body>
 </html>
