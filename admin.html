@@ -7,12 +7,11 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #08051a; color: white; padding: 20px; }
         .request-card { background: #1a1a4f; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid gold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
-        .approve-btn { background: #28a745; color: white; margin-right: 10px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; width: 45%; }
+        .approve-btn { background: #28a745; color: white; margin-right: 5%; }
         .reject-btn { background: #dc3545; color: white; }
-        .approve-btn:active, .reject-btn:active { transform: scale(0.95); }
-        .info-label { color: #aaa; font-size: 12px; }
-        .info-value { font-size: 16px; margin-bottom: 5px; color: gold; }
+        .info-label { color: #aaa; font-size: 12px; margin-top: 5px; }
+        .info-value { font-size: 16px; margin-bottom: 5px; color: gold; font-weight: bold; }
         #loading { text-align: center; margin-top: 50px; color: gold; }
     </style>
 </head>
@@ -31,21 +30,22 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // 1. ඔබේ Firebase Config එක මෙතනට දාන්න
+        // 1. ඔබේ පෞද්ගලික Firebase Config එක
         const firebaseConfig = {
             apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
             authDomain: "vissaprocarrom.firebaseapp.com",
             projectId: "vissaprocarrom",
-            storageBucket: "vissaprocarrom.appspot.com",
+            storageBucket: "vissaprocarrom.firebasestorage.app",
             messagingSenderId: "722305696915",
-            appId: "1:722305696915:web:056e8be25a245ac29c7966"
+            appId: "1:722305696915:web:056e8be25a245ac29c7966",
+            measurementId: "G-KCKJLGX5J5"
         };
 
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // 2. SECURITY LOCK: ඔබේ UID එක මෙතනට දාන්න
+        // 2. ඔබේ Admin UID එක (මෙය ඔබට පමණක් ඇතුළු වීමට ඉඩ ලබා දෙයි)
         const MY_ADMIN_UID = "EM6KUIjRNzS8WFXxBrAEYIrZXzK2";
 
         auth.onAuthStateChanged((user) => {
@@ -54,7 +54,7 @@
                     alert("ඔබට මෙම පිටුවට ඇතුළු වීමට අවසර නැත!");
                     window.location.href = "dashboard.html";
                 } else {
-                    // ඔයා Admin නම් විතරක් දත්ත පෙන්වනවා
+                    console.log("Admin Authorized!");
                     loadRequests();
                 }
             } else {
@@ -62,9 +62,9 @@
             }
         });
 
-        // දත්ත කියවීම
         function loadRequests() {
-            db.collection("deposits").where("status", "==", "pending").orderBy("timestamp", "desc")
+            // 'deposits' collection එකේ pendingRequests බලනවා
+            db.collection("deposits").where("status", "==", "pending")
             .onSnapshot((snapshot) => {
                 const listDiv = document.getElementById('requests-list');
                 listDiv.innerHTML = "";
@@ -79,16 +79,13 @@
                     const card = `
                         <div class="request-card">
                             <div class="info-label">පරිශීලකයා:</div>
-                            <div class="info-value">${data.userName || 'Unknown'}</div>
+                            <div class="info-value">${data.userName || 'Gamer'}</div>
                             
                             <div class="info-label">මුදල:</div>
                             <div class="info-value">LKR ${data.amount}</div>
                             
                             <div class="info-label">Ref Number:</div>
                             <div class="info-value">${data.reference}</div>
-                            
-                            <div class="info-label">User UID:</div>
-                            <div style="font-size:10px; color:#666;">${data.uid}</div>
 
                             <button class="btn approve-btn" onclick="approveDeposit('${doc.id}', '${data.uid}', ${data.amount})">APPROVE ✅</button>
                             <button class="btn reject-btn" onclick="rejectDeposit('${doc.id}')">REJECT ❌</button>
@@ -96,10 +93,12 @@
                     `;
                     listDiv.innerHTML += card;
                 });
+            }, (error) => {
+                console.error("Error loading data: ", error);
+                document.getElementById('loading').innerText = "දත්ත ලබා ගැනීමට නොහැකි විය. (Rules පරීක්ෂා කරන්න)";
             });
         }
 
-        // මුදල් එකතු කිරීමේ Logic එක
         async function approveDeposit(docId, userId, amount) {
             if(confirm("LKR " + amount + " ක මුදල මෙම පරිශීලකයාට ලබා දෙනවාද?")) {
                 try {
@@ -115,15 +114,13 @@
 
                         const newBalance = currentBalance + parseFloat(amount);
 
-                        // Balance එක update කරනවා
                         transaction.update(userRef, { balance: newBalance });
-                        // Request එක complete කරනවා
                         transaction.update(db.collection("deposits").doc(docId), { status: "completed" });
                     });
 
-                    alert("සාර්ථකයි! මුදල් ගිණුමට එකතු වුණා.");
+                    alert("මුදල් සාර්ථකව එකතු කළා! ✅");
                 } catch (e) {
-                    alert("වැරදීමක් වුණා: " + e.message);
+                    alert("Error: " + e.message);
                 }
             }
         }
