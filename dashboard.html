@@ -170,17 +170,11 @@
         async function startMatchmaking(fee) {
             if (myData.balance < fee) return alert("මුදල් ප්‍රමාණවත් නැත!");
             
-            // Waiting දත්ත Firebase වලට දානවා
-            await db.collection("waiting_players").doc(myData.uid).set({
-                uid: myData.uid, 
-                name: myData.name, 
-                fee: fee, 
-                time: Date.now()
-            });
-
-            // දැන් අර ලස්සන waiting.html පිටුවට යවනවා
+            // අපි ඩේටාබේස් එකට දත්ත දාන්නේ නැහැ මෙතනදී. 
+            // ඒක 'waiting.html' එකේදී සිද්ධ වෙනවා. 
+            // මෙතනින් කරන්නේ අදාළ ගාස්තුව (fee) අරගෙන waiting page එකට යවන එක විතරයි.
             window.location.href = `waiting.html?fee=${fee}`;
         }
     </script>
 </body>
-</html>
+                    </html>
