@@ -10,45 +10,64 @@
         /* Header */
         .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; }
         .user-info { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 45px; height: 45px; background: orange; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; border: 2px solid gold; }
-        .wallet { background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 20px; border: 1px solid gold; cursor: pointer; }
+        .avatar { width: 45px; height: 45px; background: orange; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; border: 2px solid gold; overflow: hidden; }
+        #user-uid { font-size: 10px; color: gold; cursor: pointer; background: rgba(255,215,0,0.1); padding: 2px 6px; border-radius: 4px; border: 0.5px dashed gold; display: inline-block; margin-top: 2px; }
+        
+        .wallet { background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px; border: 1px solid gold; cursor: pointer; }
+        .plus-btn { background: green; border-radius: 50%; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: bold; color: white; }
 
         /* Game Card */
-        .game-card { background: #1a1a4f; border-radius: 25px; margin: 15px; height: 200px; border: 3px solid gold; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 20px; }
-        .play-btn { background: linear-gradient(45deg, #ffcc00, #ff6600); border: none; padding: 12px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; }
+        .game-card { 
+            background: #1a1a4f url('https://play-movies.googleusercontent.com/vx_S_0QYJ5bK_g950vEa4vO0G5gL6yP2E8wGk8D0A5T5n0Y1vJg5N3e5N2wD2Q') center; 
+            background-size: cover; border-radius: 25px; margin: 15px; height: 220px; position: relative; border: 3px solid gold; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .card-overlay { background: linear-gradient(to top, rgba(0,0,0,0.8) 20%, transparent); padding: 20px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+        .play-btn { background: linear-gradient(45deg, #ffcc00, #ff6600); color: black; border: none; padding: 12px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
 
         /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: #100a2e; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000; }
-        .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; }
+        .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; flex: 1; }
         .nav-item.active { color: gold; }
 
         /* Modals */
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
-        .modal-content { background: #1a1a4f; margin: 20% auto; padding: 20px; border-radius: 20px; text-align: center; width: 80%; border: 1px solid gold; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(8px); }
+        .modal-content { background: #1a1a4f; margin: 20% auto; padding: 25px; border-radius: 25px; text-align: center; width: 80%; border: 2px solid gold; }
+        
+        /* Waiting Room Matching Style */
+        .matching-box { margin: 20px 0; display: flex; justify-content: space-around; align-items: center; }
+        .player-circle { width: 60px; height: 60px; border-radius: 50%; border: 2px solid white; display: flex; justify-content: center; align-items: center; background: #333; }
+        .vs-text { font-size: 24px; font-weight: bold; color: gold; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="user-info">
-            <div class="avatar">V</div>
+            <div class="avatar" id="avatar-circle">V</div>
             <div>
-                <div id="user-name" style="font-weight:bold;">Loading...</div>
-                <div id="user-uid" style="font-size: 10px; color: gold;">UID: Loading...</div>
+                <div style="font-size: 10px; color:#aaa;">Welcome Back,</div>
+                <div id="user-name" style="font-size: 16px; font-weight:bold;">Loading...</div>
+                <div id="user-uid" onclick="copyUID()">UID: Loading...</div>
             </div>
         </div>
-        <div class="wallet" onclick="goToPage('wallet.html')">LKR <span id="user-balance">0</span></div>
+        <div class="wallet" onclick="goToPage('wallet.html')">
+            <span style="color:gold; font-weight:bold;">LKR <span id="user-balance">0</span></span>
+            <div class="plus-btn">+</div>
+        </div>
     </div>
 
     <div class="game-card">
-        <div style="font-weight:bold; margin-bottom: 10px;">CARROM POOL PRO</div>
-        <button class="play-btn" onclick="showModal('modeModal')">PLAY NOW</button>
+        <div class="card-overlay">
+            <div style="font-size:20px; font-weight:bold; margin-bottom: 10px; text-shadow: 2px 2px 5px black;">CARROM POOL PRO</div>
+            <button class="play-btn" onclick="showModal('modeModal')">PLAY NOW</button>
+        </div>
     </div>
 
     <div id="modeModal" class="modal">
         <div class="modal-content">
             <h3 style="color:gold;">SELECT MODE</h3>
-            <button onclick="startMatching(100)" style="width:100%; padding:15px; margin-bottom:10px; border-radius:10px;">PLAY ONLINE (LKR 100)</button>
+            <button onclick="startMatching(100)" style="width:100%; padding:15px; margin-bottom:10px; border-radius:10px; background: gold; font-weight:bold; border:none;">ONLINE (LKR 100)</button>
+            <button onclick="startMatching(200)" style="width:100%; padding:15px; margin-bottom:15px; border-radius:10px; background: #00c6ff; color:white; font-weight:bold; border:none;">ONLINE (LKR 200)</button>
             <button onclick="closeModal('modeModal')" style="background:none; border:none; color:white;">CANCEL</button>
         </div>
     </div>
@@ -56,8 +75,13 @@
     <div id="waitingModal" class="modal">
         <div class="modal-content">
             <h3 style="color:gold;">MATCHING...</h3>
-            <p>තරඟකරුවෙකු සොයමින්...</p>
-            <button onclick="cancelMatching()" style="background:red; color:white; border:none; padding:10px 20px; border-radius:10px;">CANCEL</button>
+            <div class="matching-box">
+                <div class="player-circle" id="wait-p1">V</div>
+                <div class="vs-text">VS</div>
+                <div class="player-circle" style="animation: pulse 1s infinite;">?</div>
+            </div>
+            <p id="status-msg">Searching for players...</p>
+            <button onclick="cancelMatching()" style="background:rgba(255,0,0,0.2); border:1px solid red; color:red; padding:10px 20px; border-radius:15px; margin-top:10px;">CANCEL</button>
         </div>
     </div>
 
@@ -72,6 +96,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
@@ -86,40 +111,53 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        let myUid = '';
+        let myDetails = { uid: '', name: '', balance: 0 };
+        let matchUnsub = null;
 
         auth.onAuthStateChanged(user => {
             if (user) {
-                myUid = user.uid;
-                document.getElementById('user-uid').innerText = "UID: " + myUid.substring(0,8);
-                db.collection("users").doc(myUid).onSnapshot(doc => {
+                myDetails.uid = user.uid;
+                document.getElementById('user-uid').innerText = "UID: " + user.uid.substring(0,10) + "...";
+                db.collection("users").doc(user.uid).onSnapshot(doc => {
                     if (doc.exists) {
-                        document.getElementById('user-name').innerText = doc.data().username;
-                        document.getElementById('user-balance').innerText = doc.data().balance;
+                        myDetails.name = doc.data().username || "Player";
+                        myDetails.balance = doc.data().balance || 0;
+                        document.getElementById('user-name').innerText = myDetails.name;
+                        document.getElementById('user-balance').innerText = myDetails.balance;
+                        document.getElementById('wait-p1').innerText = myDetails.name.charAt(0);
                     }
                 });
-            }
+            } else window.location.href = "index.html";
         });
 
         async function startMatching(fee) {
-            closeModal('modeModal');
-            showModal('waitingModal');
+            if (myDetails.balance < fee) { alert("මුදල් ප්‍රමාණවත් නැත!"); return; }
             
-            // Add user to waiting list
-            await db.collection("waiting_players").doc(myUid).set({
-                uid: myUid,
-                fee: fee,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            showModal('waitingModal');
+            closeModal('modeModal');
+
+            await db.collection("waiting_players").doc(myDetails.uid).set({
+                uid: myDetails.uid, username: myDetails.name, fee: fee, time: Date.now()
             });
 
-            // Listen for opponent
-            db.collection("active_matches").doc(myUid).onSnapshot(doc => {
-                if(doc.exists) window.location.href = "carrom_online.html?matchId=" + myUid;
+            matchUnsub = db.collection("active_matches").doc(myDetails.uid).onSnapshot(doc => {
+                if (doc.exists) {
+                    document.getElementById('status-msg').innerText = "Match Found! Connecting...";
+                    setTimeout(() => { window.location.href = "carrom_online.html?matchId=" + myDetails.uid; }, 2000);
+                }
+            });
+        }
+
+        function copyUID() {
+            const uidText = auth.currentUser.uid;
+            navigator.clipboard.writeText(uidText).then(() => {
+                alert("UID Copied: " + uidText);
             });
         }
 
         function cancelMatching() {
-            db.collection("waiting_players").doc(myUid).delete();
+            db.collection("waiting_players").doc(myDetails.uid).delete();
+            if(matchUnsub) matchUnsub();
             closeModal('waitingModal');
         }
 
