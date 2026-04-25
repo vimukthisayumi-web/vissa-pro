@@ -2,24 +2,55 @@
 <html lang="si">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deposit - VISSA PRO</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #08051a; color: white; padding: 20px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: gold; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .bank-card { background: linear-gradient(45deg, #1a1a4f, #0d0d2b); padding: 20px; border-radius: 15px; border: 1px solid gold; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(255,215,0,0.2); }
+        .bank-title { color: gold; font-weight: bold; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .detail-row { margin: 8px 0; font-size: 14px; }
+        .label { color: #aaa; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #111; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: gold; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: black; font-size: 16px; transition: 0.3s; }
+        button:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
-    <h2>මුදල් තැන්පත් කරන්න (Deposit)</h2>
-    <input type="number" id="deposit-amount" placeholder="මුදල (LKR)">
-    <input type="text" id="ref-number" placeholder="Reference Number (අංකය)">
-    <button onclick="submitDeposit()">යොමු කරන්න</button>
+
+    <h2 style="text-align:center;">මුදල් තැන්පත් කරන්න</h2>
+    
+    <div class="bank-card">
+        <div class="bank-title">🏦 අපගේ බැංකු විස්තර</div>
+        <div class="detail-row"><span class="label">Bank:</span> Commercial Bank</div>
+        <div class="detail-row"><span class="label">Acc Name:</span> VISSA PRO ADMIN</div>
+        <div class="detail-row"><span class="label">Acc Number:</span> 8012345678</div>
+        <div class="detail-row"><span class="label">Branch:</span> Colombo</div>
+        <p style="font-size: 11px; color: #ffeb3b; margin-top: 10px;">* සල්ලි දැමීමෙන් පසු රිසිට් පතේ අංකය (Ref Number) පහත ඇතුළත් කරන්න.</p>
+    </div>
+
+    <div class="input-form">
+        <label>තැන්පත් කළ මුදල (Amount)</label>
+        <input type="number" id="deposit-amount" placeholder="LKR 500">
+        
+        <label>රිසිට් පතේ අංකය (Reference Number)</label>
+        <input type="text" id="ref-number" placeholder="Eg: 123456789">
+        
+        <button onclick="submitDeposit()">Submit Request</button>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
     <script>
-        const firebaseConfig = { /* ඔයාගේ කලින් තිබුණු Config එක මෙතනට අනිවාර්යයෙන්ම දාන්න */ };
+        const firebaseConfig = {
+            apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
+            authDomain: "vissaprocarrom.firebaseapp.com",
+            projectId: "vissaprocarrom",
+            storageBucket: "vissaprocarrom.firebasestorage.app",
+            messagingSenderId: "722305696915",
+            appId: "1:722305696915:web:056e8be25a245ac29c7966"
+        };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -37,10 +68,10 @@
                     status: "pending",
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 }).then(() => {
-                    alert("විස්තර යොමු කළා! Admin පරීක්ෂා කර සල්ලි එකතු කරනු ඇත.");
+                    alert("විස්තර යොමු කළා! Admin පරීක්ෂා කර සල්ලි එකතු කරනු ඇත. ✅");
                     window.location.href = "dashboard.html";
                 });
-            } else { alert("කරුණාකර විස්තර පුරවන්න."); }
+            } else { alert("කරුණාකර සියලු විස්තර පුරවන්න."); }
         }
     </script>
 </body>
