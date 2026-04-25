@@ -12,6 +12,7 @@
         .loader { border: 4px solid #333; border-top: 4px solid gold; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 15px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .finding-text { font-size: 14px; color: gold; margin-bottom: 10px; letter-spacing: 1px; }
+        #error-display { color: #ff4444; font-size: 11px; margin-top: 10px; word-break: break-all; }
     </style>
 </head>
 <body>
@@ -32,12 +33,16 @@
             </div>
         </div>
         
+        <div id="error-display"></div>
         <button onclick="cancelMatch()" style="background:none; border:1px solid #ff4444; color:#ff4444; padding:10px 25px; border-radius:12px; margin-top: 35px; cursor:pointer; font-weight: bold; font-size: 13px;">CANCEL</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script>
 
     <script>
         const firebaseConfig = {
@@ -48,6 +53,7 @@
             messagingSenderId: "722305696915",
             appId: "1:722305696915:web:056e8be25a245ac29c7966"
         };
+        
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
@@ -65,19 +71,19 @@
 
         async function startMatchingProcess(myId) {
             const waitingRef = db.collection("waiting_players");
+            const errorDisplay = document.getElementById('error-display');
             
             try {
-                // 1. මේ Fee එකට ඉන්න අයව සෙවුම් කරනවා (සරල Query එකක්)
+                // 1. මේ Fee එකට ඉන්න අයව සෙවුම් කරනවා
+                // orderBy පාවිච්චි කරොත් අනිවාර්යයෙන්ම Index එකක් හදන්න ලින්ක් එක Console එකේ එයි
                 const snapshot = await waitingRef.where("fee", "==", fee).get();
                 
                 let found = false;
                 snapshot.forEach(doc => {
-                    // මම නොවන වෙනත් කෙනෙක් ඉන්නවද බලනවා
                     if (doc.id !== myId && !found) {
                         found = true;
                         const opponentId = doc.id;
                         
-                        // ප්‍රතිවාදියාගේ ID එක නමින් මැච් එකක් හදනවා
                         db.collection("active_matches").doc(opponentId).set({
                             player1: opponentId,
                             player2: myId,
@@ -85,7 +91,6 @@
                             status: "playing",
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         }).then(() => {
-                            // ප්‍රතිවාදියාව ලයිස්තුවෙන් අයින් කරනවා
                             waitingRef.doc(opponentId).delete();
                             updateUIFound();
                             goToGame(opponentId);
@@ -94,24 +99,24 @@
                 });
 
                 if (!found) {
-                    // කෙනෙක් නැතිනම් මාව ලයිස්තුවට දානවා
                     await waitingRef.doc(myId).set({
                         uid: myId,
                         fee: fee,
                         time: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
-                    // වෙන කෙනෙක් මාව ගේම් එකට ගන්නකල් බලාගෙන ඉන්නවා
-                    db.collection("active_matches").doc(myId).onSnapshot(doc => {
+                    // වෙන කෙනෙක් මාව ගේම් එකට ගන්නකල් බලන් ඉන්නවා
+                    const unsubscribe = db.collection("active_matches").doc(myId).onSnapshot(doc => {
                         if (doc.exists) {
+                            unsubscribe();
                             updateUIFound();
                             goToGame(myId);
                         }
                     });
                 }
             } catch (err) {
-                console.error("Matchmaking error:", err);
-                alert("දත්ත දෝෂයක්! කරුණාකර පිටුව Refresh කරන්න.");
+                console.error("Firebase Error:", err);
+                errorDisplay.innerText = "Error: " + err.message;
             }
         }
 
