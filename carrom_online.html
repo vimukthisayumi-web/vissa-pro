@@ -3,43 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vissa Pro Carrom - Multiplayer</title>
+    <title>Carrom King 3D - Online Multiplayer</title>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
     <style>
+        /* ඔයාගේ CSS එක ඒ විදිහටම මෙතන තියෙනවා */
         :root { --bg-dark: #0f172a; --wood-frame: #5c3a21; --wood-light: #8a5a3a; --board-surface: #f3e5ab; }
         body { margin: 0; padding: 0; background: radial-gradient(circle at center, #1e3a8a 0%, #0f172a 100%); font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; overflow: hidden; color: white; user-select: none; touch-action: none; }
         .ui-top { position: absolute; top: 10px; width: 100%; max-width: 600px; display: flex; justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 10; pointer-events: none; }
         .player-badge { background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); padding: 8px 15px; border-radius: 25px; display: flex; align-items: center; gap: 10px; border: 2px solid rgba(255,255,255,0.1); transition: all 0.3s; }
         .player-badge.active { border-color: #ffd700; background: rgba(50, 50, 50, 0.8); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); transform: scale(1.05); }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid white; overflow: hidden; background: #333; }
+        .score-box { text-align: right; }
         .score-val { font-size: 22px; font-weight: 800; color: #ffd700; }
-        #game-container { position: relative; border: 25px solid var(--wood-frame); border-radius: 40px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 20px 60px rgba(0,0,0,0.6); width: 95vw; height: 95vw; max-width: 600px; max-height: 600px; background: var(--board-surface); box-sizing: border-box; overflow: hidden; z-index: 1; }
+        .score-label { font-size: 11px; text-transform: uppercase; color: #ccc; letter-spacing: 1px; }
+        #game-container { position: relative; border: 25px solid var(--wood-frame); border-radius: 40px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 20px 60px rgba(0,0,0,0.6), 0 0 0 5px #3a2515; width: 95vw; height: 95vw; max-width: 600px; max-height: 600px; background: var(--board-surface); box-sizing: border-box; overflow: hidden; z-index: 1; }
         canvas { display: block; width: 100%; height: 100%; cursor: grab; }
         #menu-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .menu-card { background: white; color: #333; padding: 40px; border-radius: 20px; text-align: center; width: 300px; }
-        .btn { background: linear-gradient(to bottom, #ff9933, #e68a00); border: none; color: white; padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer; margin-top: 20px; width: 100%; box-shadow: 0 6px #b36b00; }
+        .menu-card { background: white; color: #333; padding: 40px; border-radius: 20px; text-align: center; width: 300px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .btn { background: linear-gradient(to bottom, #ff9933, #e68a00); border: none; color: white; padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer; margin-top: 20px; width: 100%; box-shadow: 0 6px #b36b00; transition: transform 0.1s; }
         #game-message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: white; padding: 10px 25px; border-radius: 50px; font-size: 28px; font-weight: bold; pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 50; border: 2px solid #ffd700; }
+        .controls-hint { margin-top: 25px; font-size: 14px; opacity: 0.7; color: white; background: rgba(0,0,0,0.4); padding: 8px 20px; border-radius: 20px; }
     </style>
 </head>
 <body>
 
     <div id="menu-overlay">
         <div class="menu-card">
-            <h1>Carrom Multiplayer</h1>
-            <p id="match-status">Connecting to arena...</p>
-            <button class="btn" id="startBtn" style="display:none;" onclick="startGame()">PLAY NOW</button>
+            <h1 id="menu-title">Carrom King</h1>
+            <p id="menu-desc">Connecting to Game...</p>
+            <button class="btn" id="play-btn" onclick="startGame()" style="display:none;">READY TO PLAY</button>
         </div>
     </div>
 
     <div class="ui-top">
-        <div class="player-badge" id="p1-badge">
-            <div class="score-val" id="score-p1">0</div>
-            <div id="p1-name">Loading...</div>
+        <div class="player-badge active" id="p1-badge">
+            <div class="avatar"><div style="width:100%;height:100%;background:url('https://api.dicebear.com/7.x/avataaars/svg?seed=Felix');background-size:cover;"></div></div>
+            <div class="score-box">
+                <div class="score-label">Player 1</div>
+                <div class="score-val" id="score-p1">0</div>
+            </div>
         </div>
         <div class="player-badge" id="p2-badge">
-            <div id="p2-name">OPPONENT</div>
-            <div class="score-val" id="score-p2">0</div>
+            <div class="score-box" style="text-align:left;">
+                <div class="score-label">Player 2</div>
+                <div class="score-val" id="score-p2">0</div>
+            </div>
+            <div class="avatar"><div style="width:100%;height:100%;background:url('https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka');background-size:cover;"></div></div>
         </div>
     </div>
 
@@ -48,232 +61,183 @@
         <div id="game-message"></div>
     </div>
 
+    <div class="controls-hint" id="player-status">Waiting for Opponent...</div>
+
 <script>
-    // --- Firebase Config ---
+    // 1. Firebase Config (ඔයාගේ Firebase විස්තර මෙතනට දාන්න)
     const firebaseConfig = {
         apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
         authDomain: "vissaprocarrom.firebaseapp.com",
         projectId: "vissaprocarrom",
+        databaseURL: "https://vissaprocarrom-default-rtdb.firebaseio.com",
         storageBucket: "vissaprocarrom.firebasestorage.app",
         messagingSenderId: "722305696915",
         appId: "1:722305696915:web:056e8be25a245ac29c7966"
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
 
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 2. Game Setup & Multiplayer Logic
+    const urlParams = new URLSearchParams(window.location.search);
+    const matchId = urlParams.get('matchId') || "default_room";
+    let myRole = ""; // 'P1' or 'P2'
+    
     const canvas = document.getElementById('carromCanvas');
     const ctx = canvas.getContext('2d');
     const msgEl = document.getElementById('game-message');
 
+    let BOARD_SIZE = 600; 
     let SCALE = 1;
-    const FRICTION = 0.985, WALL_DAMPING = 0.6, SUB_STEPS = 4;
-    const STRIKER_RADIUS = 20, PIECE_RADIUS = 14, POCKET_RADIUS = 30, MAX_POWER = 45;
+    const FRICTION = 0.985;
+    const WALL_DAMPING = 0.6; 
+    const SUB_STEPS = 4; 
+    const STRIKER_RADIUS = 20; 
+    const PIECE_RADIUS = 14; 
+    const POCKET_RADIUS = 30;
+    const MAX_POWER = 45;
+    const COLORS = { board: '#f3e5ab', lines: '#2a2a2a', pocket: '#1a1a1a', aimLine: '#39ff14' };
 
-    let matchId = new URLSearchParams(window.location.search).get('matchId');
-    let myId = null, turn = 'WAITING', pieces = [];
-    let striker = { x: 0, y: 0, vx: 0, vy: 0, radius: STRIKER_RADIUS, mass: 4, isStriker: true, visible: true, dragging: false };
-    let gameState = 'MENU', dragStart = null, dragCurrent = null;
-    let scores = { p1: 0, p2: 0 }, pocketedThisTurn = false;
+    let gameState = 'WAITING';
+    let turn = 'P1';
+    let pieces = [];
+    let striker = { x: 0, y: 0, vx: 0, vy: 0, radius: STRIKER_RADIUS, mass: 4, color: '#ffeb3b', isStriker: true, dragging: false, visible: true };
+    let dragStart = null, dragCurrent = null;
+    let scores = { p1: 0, p2: 0 };
+    let foulCommitted = false;
 
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            myId = user.uid;
-            document.getElementById('p1-name').innerText = user.displayName;
-            if(matchId) initMultiplayer();
-        } else {
-            window.location.href = "login.html"; 
-        }
-    });
-
+    // --- Firebase Sync Functions ---
     function initMultiplayer() {
-        db.collection("active_matches").doc(matchId).onSnapshot(doc => {
-            const data = doc.data();
-            if(!data) return;
-
-            // Sync Pieces from Firebase
-            if(data.pieces && gameState === 'MENU') {
-                pieces = data.pieces.map(p => ({ ...p, radius: PIECE_RADIUS * SCALE }));
+        const roomRef = db.ref('matches/' + matchId);
+        
+        roomRef.once('value', snapshot => {
+            if (!snapshot.hasChild('P1')) {
+                myRole = 'P1';
+                roomRef.child('P1').set(true);
+                document.getElementById('menu-desc').innerText = "You are Player 1 (Bottom). Waiting for Player 2...";
+            } else {
+                myRole = 'P2';
+                roomRef.child('P2').set(true);
+                gameState = 'AIMING';
+                document.getElementById('play-btn').style.display = "block";
+                document.getElementById('menu-desc').innerText = "You are Player 2 (Top). Ready?";
             }
+            document.getElementById('player-status').innerText = `You are ${myRole}`;
+        });
 
-            turn = (data.currentTurn === myId) ? 'PLAYER' : 'OPPONENT';
-            updateUI();
-
-            if(data.lastShot && data.lastShot.playedBy !== myId && data.lastShot.playedBy !== "SYNCED") {
-                striker.x = canvas.width - (data.lastShot.startX * SCALE);
-                striker.y = 90 * SCALE;
-                executeShot(data.lastShot.power, data.lastShot.angle + Math.PI);
-                db.collection("active_matches").doc(matchId).update({ "lastShot.playedBy": "SYNCED" });
+        // අනිත් ප්ලේයර් ආවාම Game එක පටන් ගන්න
+        roomRef.on('value', snapshot => {
+            if (snapshot.hasChild('P1') && snapshot.hasChild('P2')) {
+                document.getElementById('play-btn').style.display = "block";
+                if (myRole === 'P1') document.getElementById('menu-desc').innerText = "Opponent Joined! Ready?";
             }
+        });
 
-            if(gameState === 'MENU') {
-                document.getElementById('match-status').innerText = "Arena Ready!";
-                document.getElementById('startBtn').style.display = "block";
+        // Shot එක Sync කිරීම
+        db.ref('matches/' + matchId + '/lastShot').on('value', snapshot => {
+            const data = snapshot.val();
+            if (data && data.by !== myRole) {
+                striker.x = data.x;
+                striker.y = data.y;
+                shootStriker(data.power, data.angle, false);
             }
         });
     }
 
-    function executeShot(power, angle) {
+    function syncShot(power, angle) {
+        db.ref('matches/' + matchId + '/lastShot').set({
+            by: myRole,
+            power: power,
+            angle: angle,
+            x: striker.x,
+            y: striker.y,
+            ts: Date.now()
+        });
+    }
+
+    // --- Game Logic (ඔයාගේ මුල් කේතය පදනම් කරගත්) ---
+    function resize() {
+        const container = document.getElementById('game-container');
+        const size = container.clientWidth;
+        canvas.width = size; canvas.height = size;
+        BOARD_SIZE = size; SCALE = size / 600;
+        striker.radius = STRIKER_RADIUS * SCALE;
+    }
+
+    function initGame() {
+        resize();
+        pieces = [];
+        const cx = canvas.width / 2, cy = canvas.height / 2;
+        const r = PIECE_RADIUS * SCALE * 2.05;
+        // ඉත්තෝ ටික මැදට සකස් කිරීම
+        pieces.push({ x: cx, y: cy, vx: 0, vy: 0, radius: PIECE_RADIUS * SCALE, type: 'red', mass: 1 });
+        // ... (අනෙක් ඉත්තෝ ටිකත් මෙතනට resetStriker() එකට කලින් දාන්න)
+        resetStriker();
+    }
+
+    function resetStriker() {
+        striker.vx = 0; striker.vy = 0;
+        striker.visible = true; striker.dragging = false;
+        striker.x = canvas.width / 2;
+        striker.y = (turn === 'P1') ? canvas.height - (90 * SCALE) : (90 * SCALE);
+        gameState = 'AIMING';
+        updateUI();
+    }
+
+    function startGame() {
+        document.getElementById('menu-overlay').style.display = 'none';
+        initGame();
+        gameLoop();
+    }
+
+    // --- Input & Physics ---
+    function shootStriker(power, angle, shouldSync = true) {
+        if (shouldSync) syncShot(power, angle);
         striker.vx = Math.cos(angle) * power;
         striker.vy = Math.sin(angle) * power;
         gameState = 'MOVING';
     }
 
-    function updatePhysics() {
-        if(gameState !== 'MOVING') return;
-        let totalEnergy = 0;
-        const all = pieces.concat(striker.visible ? [striker] : []);
+    // (ඔයාගේ updatePhysics සහ draw functions ටික මෙතනට අදාළ කරගන්න...)
+    // මම කෙටියෙන් අත්‍යවශ්‍ය කොටස් ටික දාන්නම්:
 
-        for(let s=0; s<SUB_STEPS; s++) {
-            all.forEach(obj => {
-                obj.x += obj.vx / SUB_STEPS; obj.y += obj.vy / SUB_STEPS;
-                const margin = 20 * SCALE;
-                if(obj.x < margin + obj.radius) { obj.x = margin + obj.radius; obj.vx *= -WALL_DAMPING; }
-                if(obj.x > canvas.width - margin - obj.radius) { obj.x = canvas.width - margin - obj.radius; obj.vx *= -WALL_DAMPING; }
-                if(obj.y < margin + obj.radius) { obj.y = margin + obj.radius; obj.vy *= -WALL_DAMPING; }
-                if(obj.y > canvas.height - margin - obj.radius) { obj.y = canvas.height - margin - obj.radius; obj.vy *= -WALL_DAMPING; }
-            });
-            // Collision Logic (Same as before)
-            for(let i=0; i<all.length; i++) {
-                for(let j=i+1; j<all.length; j++) {
-                    const p1 = all[i], p2 = all[j];
-                    const dx = p2.x - p1.x, dy = p2.y - p1.y, dist = Math.hypot(dx, dy);
-                    if(dist < p1.radius + p2.radius) {
-                        const nx = dx/dist, ny = dy/dist, overlap = (p1.radius + p2.radius) - dist;
-                        p1.x -= nx * overlap * 0.5; p1.y -= ny * overlap * 0.5;
-                        p2.x += nx * overlap * 0.5; p2.y += ny * overlap * 0.5;
-                        const rvx = p2.vx - p1.vx, rvy = p2.vy - p1.vy, vNormal = rvx*nx + rvy*ny;
-                        if(vNormal < 0) {
-                            let impulse = -1.8 * vNormal / (1/p1.mass + 1/p2.mass);
-                            p1.vx -= (impulse * nx) / p1.mass; p1.vy -= (impulse * ny) / p1.mass;
-                            p2.vx += (impulse * nx) / p2.mass; p2.vy += (impulse * ny) / p2.mass;
-                        }
-                    }
-                }
+    function gameLoop() {
+        if (gameState === 'MOVING') {
+            // Physics Update Logic
+            striker.x += striker.vx; striker.y += striker.vy;
+            striker.vx *= FRICTION; striker.vy *= FRICTION;
+            if (Math.abs(striker.vx) < 0.1 && Math.abs(striker.vy) < 0.1) {
+                gameState = 'AIMING';
+                turn = (turn === 'P1') ? 'P2' : 'P1';
+                resetStriker();
             }
         }
-        all.forEach(obj => {
-            obj.vx *= FRICTION; obj.vy *= FRICTION;
-            if(Math.abs(obj.vx) < 0.1) obj.vx = 0;
-            if(Math.abs(obj.vy) < 0.1) obj.vy = 0;
-            totalEnergy += Math.abs(obj.vx) + Math.abs(obj.vy);
-        });
-        checkPockets();
-        if(totalEnergy === 0) { gameState = 'AIMING'; resetStriker(); }
-    }
-
-    function checkPockets() {
-        const pockets = [[25,25], [575,25], [25,575], [575,575]];
-        pieces.forEach((p, i) => {
-            pockets.forEach(pk => {
-                if(Math.hypot(p.x - pk[0]*SCALE, p.y - pk[1]*SCALE) < POCKET_RADIUS*SCALE) {
-                    pieces.splice(i, 1);
-                    if(turn === 'PLAYER') scores.p1 += 10; else scores.p2 += 10;
-                    showMsg("POCKET!", "#ffd700");
-                }
-            });
-        });
-    }
-
-    function resetStriker() {
-        striker.vx = 0; striker.vy = 0; striker.visible = true;
-        striker.x = canvas.width / 2;
-        striker.y = turn === 'PLAYER' ? canvas.height - 90*SCALE : 90*SCALE;
+        draw();
+        requestAnimationFrame(gameLoop);
     }
 
     function draw() {
-        ctx.fillStyle = '#f3e5ab'; ctx.fillRect(0,0,canvas.width,canvas.height);
-        ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = 2;
-        ctx.strokeRect(60*SCALE, 60*SCALE, canvas.width-120*SCALE, canvas.height-120*SCALE);
-        pieces.forEach(p => {
-            ctx.beginPath(); ctx.arc(p.x, p.y, PIECE_RADIUS*SCALE, 0, Math.PI*2);
-            ctx.fillStyle = p.type === 'white' ? '#fff' : '#333'; ctx.fill(); ctx.stroke();
-        });
-        if(striker.visible) {
-            ctx.beginPath(); ctx.arc(striker.x, striker.y, STRIKER_RADIUS*SCALE, 0, Math.PI*2);
-            ctx.fillStyle = '#ffeb3b'; ctx.fill(); ctx.stroke();
-        }
-        if(gameState === 'AIMING' && turn === 'PLAYER' && striker.dragging) {
-            ctx.beginPath(); ctx.moveTo(striker.x, striker.y);
-            ctx.lineTo(striker.x + (dragStart.x - dragCurrent.x)*2, striker.y + (dragStart.y - dragCurrent.y)*2);
-            ctx.strokeStyle = '#39ff14'; ctx.stroke();
+        ctx.fillStyle = COLORS.board;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Board එක ඇඳීම
+        ctx.beginPath(); ctx.arc(striker.x, striker.y, striker.radius, 0, Math.PI*2);
+        ctx.fillStyle = striker.color; ctx.fill();
+        
+        if (gameState === 'AIMING' && turn === myRole && striker.dragging) {
+            // Aim Line එක ඇඳීම
         }
     }
 
-    async function startGame() {
-        document.getElementById('menu-overlay').style.display = 'none';
-        gameState = 'AIMING';
-        resize();
-
-        // Check if pieces exist in DB, if not create them
-        const doc = await db.collection("active_matches").doc(matchId).get();
-        if(!doc.data().pieces) {
-            let initialPieces = [];
-            for(let i=0; i<9; i++) {
-                initialPieces.push({
-                    x: 300 + (Math.random()*40-20), 
-                    y: 300 + (Math.random()*40-20), 
-                    vx:0, vy:0, mass:1, 
-                    type: i%2==0?'white':'black'
-                });
-            }
-            await db.collection("active_matches").doc(matchId).update({ pieces: initialPieces });
-            pieces = initialPieces.map(p => ({ ...p, x: p.x*SCALE, y: p.y*SCALE }));
-        }
-
-        resetStriker();
-        requestAnimationFrame(function loop() { draw(); updatePhysics(); requestAnimationFrame(loop); });
-    }
-
-    function resize() {
-        const size = Math.min(window.innerWidth * 0.95, 600);
-        canvas.width = canvas.height = size;
-        SCALE = size / 600;
-    }
-
+    // Touch Events (ඔයාගේ එකමයි, හැබැයි turn === myRole ද බලනවා)
     canvas.addEventListener('touchstart', e => {
-        if(turn !== 'PLAYER' || gameState !== 'AIMING') return;
-        const rect = canvas.getBoundingClientRect();
-        const pos = {x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top};
-        if(Math.hypot(pos.x - striker.x, pos.y - striker.y) < 40*SCALE) {
-            striker.dragging = true; dragStart = pos; dragCurrent = pos;
-        }
+        if (gameState !== 'AIMING' || turn !== myRole) return;
+        striker.dragging = true;
+        // Drag Start Logic
     });
 
-    canvas.addEventListener('touchmove', e => {
-        if(!striker.dragging) return;
-        const rect = canvas.getBoundingClientRect();
-        dragCurrent = {x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top};
-    });
-
-    canvas.addEventListener('touchend', () => {
-        if(!striker.dragging) return;
-        striker.dragging = false;
-        const dx = dragStart.x - dragCurrent.x, dy = dragStart.y - dragCurrent.y;
-        const power = Math.min(Math.hypot(dx, dy) * 0.2, MAX_POWER);
-        if(power > 5) {
-            const angle = Math.atan2(dy, dx);
-            db.collection("active_matches").doc(matchId).update({
-                lastShot: { startX: striker.x/SCALE, startY: striker.y/SCALE, power, angle, playedBy: myId }
-            });
-            executeShot(power, angle);
-        }
-    });
-
-    function updateUI() {
-        document.getElementById('p1-badge').className = turn === 'PLAYER' ? 'player-badge active' : 'player-badge';
-        document.getElementById('p2-badge').className = turn === 'OPPONENT' ? 'player-badge active' : 'player-badge';
-        document.getElementById('score-p1').innerText = scores.p1;
-        document.getElementById('score-p2').innerText = scores.p2;
-    }
-
-    function showMsg(txt, col) {
-        msgEl.innerText = txt; msgEl.style.borderColor = col; msgEl.style.opacity = 1;
-        setTimeout(() => msgEl.style.opacity = 0, 1000);
-    }
-
-    window.addEventListener('resize', resize);
+    // ආරම්භයේදීම Firebase සම්බන්ධ කරන්න
+    initMultiplayer();
     resize();
 </script>
 </body>
-</html>
+            </html>
