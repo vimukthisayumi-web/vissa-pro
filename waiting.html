@@ -6,7 +6,7 @@
     <title>VISSA PRO - Matching</title>
     <style>
         body { background: #050510; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }
-        .match-box { text-align: center; background: #0d0d2b; padding: 30px; border-radius: 20px; border: 2px solid gold; width: 80%; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
+        .match-box { text-align: center; background: #0d0d2b; padding: 30px; border-radius: 20px; border: 2px solid gold; width: 85%; max-width: 400px; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
         .p-img { width: 70px; height: 70px; border: 2px solid gold; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; background: #222; margin: 0 auto; transition: 0.5s; }
         .vs-circle { width: 50px; height: 50px; background: gold; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 20px auto; box-shadow: 0 0 10px gold; }
         .loader { border: 4px solid #333; border-top: 4px solid gold; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 15px auto; }
@@ -66,56 +66,69 @@
         async function startMatchingProcess(myId) {
             const waitingRef = db.collection("waiting_players");
 
-            // 1. මුලින්ම බලනවා මම වගේම මේ ගානට සෙල්ලම් කරන්න බලාගෙන ඉන්න වෙන කෙනෙක් ඉන්නවද කියලා
-            const snapshot = await waitingRef.where("fee", "==", fee).where("uid", "!=", myId).limit(1).get();
+            try {
+                // 1. මේ ගාස්තුවටම බලාගෙන ඉන්න වෙනත් කෙනෙක් ඉන්නවද බලන්න
+                const snapshot = await waitingRef
+                    .where("fee", "==", fee)
+                    .where("uid", "!=", myId)
+                    .limit(1)
+                    .get();
 
-            if (!snapshot.empty) {
-                // කෙනෙක් ඉන්නවා! එයාගේ විස්තර ගමු
-                const opponent = snapshot.docs[0].data();
-                const matchId = opponent.uid; // මැච් එකේ ID එක විදිහට මුලින් හිටපු කෙනාගේ ID එක ගන්නවා
+                if (!snapshot.empty) {
+                    const opponent = snapshot.docs[0].data();
+                    const matchId = opponent.uid; // පරණ ප්ලේයර්ගේ ID එක මැච් ID එක ලෙස ගන්නවා
 
-                // ප්‍රතිවාදියාගේ පෙනුම අප්ඩේට් කරමු
-                document.getElementById('opp-avatar').style.opacity = "1";
-                document.getElementById('opp-avatar').style.borderStyle = "solid";
-                document.getElementById('opp-name').innerText = "ප්‍රතිවාදියා හමුවුණා!";
-                document.getElementById('status').innerText = "තරඟය සූදානම්...";
+                    // UI එක වෙනස් කරන්න
+                    updateUIFound();
 
-                // Active Match එකක් හදනවා
-                await db.collection("active_matches").doc(matchId).set({
-                    player1: opponent.uid,
-                    player2: myId,
-                    fee: fee,
-                    status: "playing",
-                    createdAt: Date.now()
-                });
+                    // මැච් එක සක්‍රීය කරන්න
+                    await db.collection("active_matches").doc(matchId).set({
+                        player1: opponent.uid,
+                        player2: myId,
+                        fee: fee,
+                        status: "playing",
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
 
-                // දැන් එයාව waiting list එකෙන් අයින් කරනවා (මම ලයිස්තුවට ඇතුළු වුණේ නෑ, මොකද මට කෙනෙක් හමුවුණ නිසා)
-                await waitingRef.doc(opponent.uid).delete();
-                
-                // දෙන්නවම ගේම් එකට යවනවා
-                setTimeout(() => {
-                    window.location.href = "carrom_online.html?matchId=" + matchId;
-                }, 1500);
+                    // ප්‍රතිවාදියාව Waiting List එකෙන් ඉවත් කරන්න
+                    await waitingRef.doc(opponent.uid).delete();
+                    
+                    goToGame(matchId);
+                } else {
+                    // කෙනෙක් නැතිනම් මාව ලිස්ට් එකට එකතු කරන්න
+                    await waitingRef.doc(myId).set({
+                        uid: myId,
+                        fee: fee,
+                        time: Date.now()
+                    });
 
-            } else {
-                // කවුරුත් නෑ, මම ලයිස්තුවට ඇතුළු වෙලා කෙනෙක් එනකල් බලාගෙන ඉන්නවා
-                await waitingRef.doc(myId).set({
-                    uid: myId,
-                    fee: fee,
-                    time: Date.now()
-                });
-
-                // මගේ ID එකෙන් active_matches එකට කවුරු හරි මාව සම්බන්ධ කරනවද කියලා බලන් ඉන්නවා
-                db.collection("active_matches").doc(myId).onSnapshot(doc => {
-                    if (doc.exists) {
-                        document.getElementById('opp-name').innerText = "ප්‍රතිවාදියා සම්බන්ධ වුණා!";
-                        document.getElementById('status').innerText = "තරඟයට පිවිසෙමින්...";
-                        setTimeout(() => {
-                            window.location.href = "carrom_online.html?matchId=" + myId;
-                        }, 1500);
-                    }
-                });
+                    // කවුරුහරි මාව සම්බන්ධ කරනකම් බලාගෙන ඉන්න
+                    db.collection("active_matches").doc(myId).onSnapshot(doc => {
+                        if (doc.exists) {
+                            updateUIFound();
+                            goToGame(myId);
+                        }
+                    }, error => {
+                        console.error("Snapshot error:", error);
+                    });
+                }
+            } catch (err) {
+                console.error("Matchmaking error:", err);
+                alert("දත්ත දෝෂයක්! කරුණාකර නැවත උත්සාහ කරන්න.");
             }
+        }
+
+        function updateUIFound() {
+            document.getElementById('opp-avatar').style.opacity = "1";
+            document.getElementById('opp-avatar').style.borderStyle = "solid";
+            document.getElementById('opp-name').innerText = "ප්‍රතිවාදියා හමුවුණා!";
+            document.getElementById('status').innerText = "තරඟයට පිවිසෙමින්...";
+        }
+
+        function goToGame(matchId) {
+            setTimeout(() => {
+                window.location.href = "carrom_online.html?matchId=" + matchId;
+            }, 1500);
         }
 
         function cancelMatch() {
