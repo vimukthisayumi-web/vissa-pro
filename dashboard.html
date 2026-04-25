@@ -10,130 +10,68 @@
         /* Header */
         .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; }
         .user-info { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 45px; height: 45px; background: orange; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden; border: 2px solid gold; }
-        #user-uid { font-size: 10px; color: gold; cursor: pointer; background: rgba(255,215,0,0.1); padding: 2px 6px; border-radius: 4px; border: 0.5px dashed gold; display: inline-block; margin-top: 2px; }
-        .wallet { background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px; border: 1px solid gold; cursor: pointer; }
+        .avatar { width: 45px; height: 45px; background: orange; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; border: 2px solid gold; }
+        .wallet { background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 20px; border: 1px solid gold; cursor: pointer; }
 
         /* Game Card */
-        .game-card { 
-            background: #1a1a4f url('https://play-movies.googleusercontent.com/vx_S_0QYJ5bK_g950vEa4vO0G5gL6yP2E8wGk8D0A5T5n0Y1vJg5N3e5N2wD2Q') center; 
-            background-size: cover; border-radius: 25px; margin: 15px; height: 220px; position: relative; border: 3px solid gold; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-        }
-        .card-overlay { background: linear-gradient(to top, rgba(0,0,0,0.8) 20%, transparent); padding: 20px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
-        .play-btn { background: linear-gradient(45deg, #ffcc00, #ff6600); color: black; border: none; padding: 12px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
+        .game-card { background: #1a1a4f; border-radius: 25px; margin: 15px; height: 200px; border: 3px solid gold; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 20px; }
+        .play-btn { background: linear-gradient(45deg, #ffcc00, #ff6600); border: none; padding: 12px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; }
+
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: #100a2e; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000; }
+        .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; }
+        .nav-item.active { color: gold; }
 
         /* Modals */
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); }
-        .modal-content { background: #1a1a4f; margin: 15% auto; padding: 25px; border: 2px solid gold; width: 85%; border-radius: 25px; text-align: center; }
-        
-        .mode-option { display: flex; align-items: center; padding: 18px; margin-bottom: 15px; border-radius: 15px; cursor: pointer; color: white; font-weight: bold; }
-        .online { background: linear-gradient(to right, #00c6ff, #0072ff); }
-        .practice { background: linear-gradient(to right, #56ab2f, #a8e063); }
-
-        /* Waiting Room Specific */
-        .spinner-box { width: 120px; height: 120px; margin: 0 auto 20px; position: relative; display: flex; align-items: center; justify-content: center; }
-        .spinner { width: 100%; height: 100%; border: 5px dashed gold; border-radius: 50%; animation: spin 3s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        .vs-container { display: flex; justify-content: space-around; align-items: center; margin-top: 20px; }
-        .player-wait { text-align: center; width: 80px; }
-        .p-img { width: 60px; height: 60px; border-radius: 50%; border: 2px solid white; background: #333; margin-bottom: 5px; }
-        .pulse { animation: pulse-anim 1.5s infinite; background: #444; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        @keyframes pulse-anim { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-
-        /* Table Slider */
-        .room-slider { display: flex; overflow-x: auto; gap: 15px; padding: 10px 5px; scrollbar-width: none; }
-        .room-card { min-width: 80%; background: rgba(255,255,255,0.05); border: 1.5px solid gold; border-radius: 20px; padding: 20px; }
-        .room-price { font-size: 24px; font-weight: bold; margin: 10px 0; }
-        .join-btn { background: gold; color: black; border: none; padding: 10px 30px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-
-        /* Nav */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: #100a2e; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; }
-        .nav-item { text-align: center; color: #888; font-size: 10px; flex: 1; }
-        .nav-item.active { color: gold; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
+        .modal-content { background: #1a1a4f; margin: 20% auto; padding: 20px; border-radius: 20px; text-align: center; width: 80%; border: 1px solid gold; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="user-info">
-            <div class="avatar" id="my-avatar">V</div>
+            <div class="avatar">V</div>
             <div>
                 <div id="user-name" style="font-weight:bold;">Loading...</div>
-                <div id="user-uid" onclick="copyUID()">UID: ...</div>
+                <div id="user-uid" style="font-size: 10px; color: gold;">UID: Loading...</div>
             </div>
         </div>
-        <div class="wallet" onclick="goToPage('wallet.html')">
-            <span style="color:gold;">LKR</span> <span id="user-balance">0</span>
-        </div>
+        <div class="wallet" onclick="goToPage('wallet.html')">LKR <span id="user-balance">0</span></div>
     </div>
 
     <div class="game-card">
-        <div class="card-overlay">
-            <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">CARROM POOL PRO</div>
-            <button class="play-btn" onclick="showModal('modeModal')">PLAY NOW</button>
-        </div>
+        <div style="font-weight:bold; margin-bottom: 10px;">CARROM POOL PRO</div>
+        <button class="play-btn" onclick="showModal('modeModal')">PLAY NOW</button>
     </div>
 
     <div id="modeModal" class="modal">
         <div class="modal-content">
             <h3 style="color:gold;">SELECT MODE</h3>
-            <div class="mode-option online" onclick="openTables()">🌐 PLAY ONLINE</div>
-            <div class="mode-option practice" onclick="goToPage('carrom_practice.html')">🎓 PRACTICE</div>
-            <button onclick="closeModal('modeModal')" style="color:white; background:none; border:none;">CLOSE</button>
-        </div>
-    </div>
-
-    <div id="roomModal" class="modal">
-        <div class="modal-content">
-            <h3 style="color:gold;">CHOOSE TABLE</h3>
-            <div class="room-slider">
-                <div class="room-card">
-                    <div>Starter</div>
-                    <div class="room-price">LKR 100</div>
-                    <button class="join-btn" onclick="startMatching(100)">JOIN</button>
-                </div>
-                <div class="room-card">
-                    <div>Pro</div>
-                    <div class="room-price">LKR 200</div>
-                    <button class="join-btn" onclick="startMatching(200)">JOIN</button>
-                </div>
-            </div>
-            <button onclick="closeModal('roomModal')" style="color:white; background:none; border:none; margin-top:10px;">BACK</button>
+            <button onclick="startMatching(100)" style="width:100%; padding:15px; margin-bottom:10px; border-radius:10px;">PLAY ONLINE (LKR 100)</button>
+            <button onclick="closeModal('modeModal')" style="background:none; border:none; color:white;">CANCEL</button>
         </div>
     </div>
 
     <div id="waitingModal" class="modal">
-        <div class="modal-content" style="background:transparent; border:none;">
-            <div class="spinner-box">
-                <div class="spinner"></div>
-                <div style="position:absolute; font-weight:bold; color:gold;">MATCHING</div>
-            </div>
-            <div class="vs-container">
-                <div class="player-wait">
-                    <div class="p-img" style="border-color:gold;">V</div>
-                    <div id="wait-p1-name" style="font-size:12px;">YOU</div>
-                </div>
-                <div style="font-size:24px; font-weight:bold;">VS</div>
-                <div class="player-wait">
-                    <div id="opp-img" class="p-img pulse">?</div>
-                    <div id="opp-name" style="font-size:12px; color:#aaa;">Searching...</div>
-                </div>
-            </div>
-            <p id="status-text" style="margin-top:20px; font-size:13px; color:#aaa;">Finding a worthy opponent...</p>
-            <button onclick="cancelMatching()" style="margin-top:20px; color:red; border:1px solid red; background:none; padding:8px 20px; border-radius:15px;">CANCEL</button>
+        <div class="modal-content">
+            <h3 style="color:gold;">MATCHING...</h3>
+            <p>තරඟකරුවෙකු සොයමින්...</p>
+            <button onclick="cancelMatching()" style="background:red; color:white; border:none; padding:10px 20px; border-radius:10px;">CANCEL</button>
         </div>
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item active">🏠<br>මුල් පිටුව</div>
+        <div class="nav-item active" onclick="goToPage('dashboard.html')">🏠<br>මුල් පිටුව</div>
         <div class="nav-item" onclick="goToPage('wallet.html')">👜<br>පසුම්බිය</div>
+        <div class="nav-item" onclick="goToPage('events.html')">🏆<br>සිදුවීම්</div>
+        <div class="nav-item" onclick="goToPage('notifications.html')">🔔<br>දැනුම්දීම්</div>
         <div class="nav-item" onclick="goToPage('profile.html')">👤<br>පැතිකඩ</div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
@@ -148,87 +86,46 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        let myData = { uid: '', name: '', balance: 0 };
-        let matchListener = null;
+        let myUid = '';
 
-        auth.onAuthStateChanged((user) => {
+        auth.onAuthStateChanged(user => {
             if (user) {
-                myData.uid = user.uid;
-                document.getElementById('user-uid').innerText = "UID: " + user.uid.substring(0,8);
-                db.collection("users").doc(user.uid).onSnapshot(doc => {
+                myUid = user.uid;
+                document.getElementById('user-uid').innerText = "UID: " + myUid.substring(0,8);
+                db.collection("users").doc(myUid).onSnapshot(doc => {
                     if (doc.exists) {
-                        myData.name = doc.data().username || "Player";
-                        myData.balance = doc.data().balance || 0;
-                        document.getElementById('user-name').innerText = myData.name;
-                        document.getElementById('wait-p1-name').innerText = myData.name;
-                        document.getElementById('user-balance').innerText = myData.balance;
+                        document.getElementById('user-name').innerText = doc.data().username;
+                        document.getElementById('user-balance').innerText = doc.data().balance;
                     }
                 });
-            } else window.location.href = "index.html";
+            }
         });
 
         async function startMatching(fee) {
-            if (myData.balance < fee) { return alert("මුදල් ප්‍රමාණවත් නැත!"); }
-            
-            closeModal('roomModal');
+            closeModal('modeModal');
             showModal('waitingModal');
+            
+            // Add user to waiting list
+            await db.collection("waiting_players").doc(myUid).set({
+                uid: myUid,
+                fee: fee,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
 
-            const waitingRoom = db.collection("waiting_players");
-            const snap = await waitingRoom.where("fee", "==", fee).limit(1).get();
-
-            if (!snap.empty && snap.docs[0].id !== myData.uid) {
-                // Opponent found
-                const opponent = snap.docs[0].data();
-                const matchId = snap.docs[0].id; // Use opponent's UID as Match ID
-
-                showFoundOpponent(opponent.username);
-
-                await db.collection("active_matches").doc(matchId).set({
-                    p1: opponent.uid, p1_name: opponent.username,
-                    p2: myData.uid, p2_name: myData.name,
-                    fee: fee, status: "ready"
-                });
-
-                await waitingRoom.doc(matchId).delete();
-                goToGame(matchId);
-            } else {
-                // No opponent, I am waiting
-                await waitingRoom.doc(myData.uid).set({
-                    uid: myData.uid, username: myData.name, fee: fee, time: Date.now()
-                });
-
-                matchListener = db.collection("active_matches").doc(myData.uid)
-                    .onSnapshot(doc => {
-                        if (doc.exists && doc.data().status === "ready") {
-                            showFoundOpponent(doc.data().p2_name);
-                            goToGame(myData.uid);
-                        }
-                    });
-            }
-        }
-
-        function showFoundOpponent(name) {
-            document.getElementById('opp-img').classList.remove('pulse');
-            document.getElementById('opp-img').innerText = name.charAt(0);
-            document.getElementById('opp-name').innerText = name;
-            document.getElementById('status-text').innerText = "Match Found! Connecting...";
-        }
-
-        function goToGame(id) {
-            setTimeout(() => { window.location.href = "carrom_online.html?matchId=" + id; }, 2000);
+            // Listen for opponent
+            db.collection("active_matches").doc(myUid).onSnapshot(doc => {
+                if(doc.exists) window.location.href = "carrom_online.html?matchId=" + myUid;
+            });
         }
 
         function cancelMatching() {
-            db.collection("waiting_players").doc(myData.uid).delete();
-            if(matchListener) matchListener();
+            db.collection("waiting_players").doc(myUid).delete();
             closeModal('waitingModal');
         }
 
         function showModal(id) { document.getElementById(id).style.display = 'block'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function openTables() { closeModal('modeModal'); showModal('roomModal'); }
         function goToPage(p) { window.location.href = p; }
-        function copyUID() { navigator.clipboard.writeText(myData.uid); alert("UID Copied!"); }
     </script>
 </body>
 </html>
