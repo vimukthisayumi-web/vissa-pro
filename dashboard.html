@@ -28,7 +28,7 @@
         .online-btn { background: #007bff; color: white; }
         .practice-btn { background: #8bc34a; color: white; }
 
-        /* Room Slider - Rooms 5ක් */
+        /* Room Slider */
         .room-container { display: flex; overflow-x: auto; gap: 15px; padding: 15px 0; scroll-snap-type: x mandatory; scrollbar-width: none; }
         .room-container::-webkit-scrollbar { display: none; }
         .room-card { min-width: 85%; background: rgba(255,255,255,0.05); border: 1.5px solid gold; border-radius: 15px; padding: 20px; scroll-snap-align: center; }
@@ -37,13 +37,7 @@
         .room-win { color: #00ffcc; font-size: 14px; margin-bottom: 15px; }
         .btn-join { background: #ffcc00; color: black; border: none; padding: 10px 40px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; }
 
-        /* Matching Screen */
-        .match-bg { background: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6vG8lUv-v4_P6Qz9_H5B_2Hq_L2Y7p5J6XQ&s') center; background-size: cover; }
-        .matching-box { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 30px; }
-        .p-img { width: 70px; height: 70px; border: 2px solid white; border-radius: 15px; background: #222; display: flex; align-items: center; justify-content: center; font-size: 30px; }
-        .vs-circle { width: 50px; height: 50px; background: gold; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-
-        /* Bottom Nav - Icons 5 */
+        /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: #0a0a20; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; }
         .nav-item { text-align: center; color: #888; font-size: 10px; flex: 1; cursor: pointer; }
         .nav-item.active { color: #ffcc00; }
@@ -117,24 +111,6 @@
         </div>
     </div>
 
-    <div id="waitingModal" class="modal match-bg">
-        <div class="modal-content" style="background: rgba(0,0,0,0.8); border:none;">
-            <div style="color: gold; font-weight: bold; margin-bottom: 10px;">MATCHING...</div>
-            <div class="matching-box">
-                <div style="text-align:center;">
-                    <div class="p-img" id="wait-p1-img">👤</div>
-                    <div style="font-size: 12px; margin-top: 5px;" id="p1-name">YOU</div>
-                </div>
-                <div class="vs-circle">VS</div>
-                <div style="text-align:center;">
-                    <div class="p-img" style="border-style: dashed; opacity: 0.5;">?</div>
-                    <div style="font-size: 12px; margin-top: 5px; color: #888;">Searching...</div>
-                </div>
-            </div>
-            <button onclick="cancelMatch()" style="background:none; border:1px solid red; color:red; padding:8px 20px; border-radius:10px; margin-top: 30px;">CANCEL</button>
-        </div>
-    </div>
-
     <div class="bottom-nav">
         <div class="nav-item active" onclick="goToPage('dashboard.html')">🏠<br>මුල් පිටුව</div>
         <div class="nav-item" onclick="goToPage('wallet.html')">👜<br>පසුම්බිය</div>
@@ -172,15 +148,13 @@
                         myData.name = doc.data().username || "Player";
                         myData.balance = doc.data().balance || 0;
                         document.getElementById('user-name').innerText = myData.name;
-                        document.getElementById('p1-name').innerText = myData.name;
                         document.getElementById('user-balance').innerText = myData.balance;
-                        document.getElementById('wait-p1-img').innerText = myData.name.charAt(0);
+                        document.getElementById('nav-avatar').innerText = myData.name.charAt(0).toUpperCase();
                     }
                 });
             } else window.location.href = "index.html";
         });
 
-        // UID Copy Function
         function copyUID() {
             const fullUID = auth.currentUser.uid;
             navigator.clipboard.writeText(fullUID).then(() => {
@@ -195,21 +169,17 @@
 
         async function startMatchmaking(fee) {
             if (myData.balance < fee) return alert("මුදල් ප්‍රමාණවත් නැත!");
-            closeModal('roomModal');
-            showModal('waitingModal');
             
+            // Waiting දත්ත Firebase වලට දානවා
             await db.collection("waiting_players").doc(myData.uid).set({
-                uid: myData.uid, name: myData.name, fee: fee, time: Date.now()
+                uid: myData.uid, 
+                name: myData.name, 
+                fee: fee, 
+                time: Date.now()
             });
 
-            db.collection("active_matches").doc(myData.uid).onSnapshot(doc => {
-                if (doc.exists) window.location.href = "carrom_online.html?matchId=" + myData.uid;
-            });
-        }
-
-        function cancelMatch() {
-            db.collection("waiting_players").doc(myData.uid).delete();
-            closeModal('waitingModal');
+            // දැන් අර ලස්සන waiting.html පිටුවට යවනවා
+            window.location.href = `waiting.html?fee=${fee}`;
         }
     </script>
 </body>
