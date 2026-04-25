@@ -9,7 +9,8 @@
         .bank-card { background: linear-gradient(45deg, #1a1a4f, #0d0d2b); padding: 20px; border-radius: 15px; border: 1px solid gold; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(255,215,0,0.2); }
         .bank-title { color: gold; font-weight: bold; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 5px; }
         .detail-row { margin: 8px 0; font-size: 14px; }
-        .label { color: #aaa; }
+        .label { color: #aaa; width: 100px; display: inline-block; }
+        .value { color: #fff; font-weight: bold; }
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #111; color: white; box-sizing: border-box; }
         button { width: 100%; padding: 15px; background: gold; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: black; font-size: 16px; transition: 0.3s; }
         button:active { transform: scale(0.98); }
@@ -21,10 +22,10 @@
     
     <div class="bank-card">
         <div class="bank-title">🏦 අපගේ බැංකු විස්තර</div>
-        <div class="detail-row"><span class="label">Bank:</span> Commercial Bank</div>
-        <div class="detail-row"><span class="label">Acc Name:</span> VISSA PRO ADMIN</div>
-        <div class="detail-row"><span class="label">Acc Number:</span> 8012345678</div>
-        <div class="detail-row"><span class="label">Branch:</span> Colombo</div>
+        <div class="detail-row"><span class="label">Bank:</span> <span class="value">COMMERCIAL BANK</span></div>
+        <div class="detail-row"><span class="label">Acc Name:</span> <span class="value">I P VIMUKTHI THUHINA WIJERATHNA</span></div>
+        <div class="detail-row"><span class="label">Acc Number:</span> <span class="value">8028840493</span></div>
+        <div class="detail-row"><span class="label">Branch:</span> <span class="value">Veyangoda</span></div>
         <p style="font-size: 11px; color: #ffeb3b; margin-top: 10px;">* සල්ලි දැමීමෙන් පසු රිසිට් පතේ අංකය (Ref Number) පහත ඇතුළත් කරන්න.</p>
     </div>
 
@@ -49,7 +50,8 @@
             projectId: "vissaprocarrom",
             storageBucket: "vissaprocarrom.firebasestorage.app",
             messagingSenderId: "722305696915",
-            appId: "1:722305696915:web:056e8be25a245ac29c7966"
+            appId: "1:722305696915:web:056e8be25a245ac29c7966",
+            measurementId: "G-KCKJLGX5J5"
         };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
