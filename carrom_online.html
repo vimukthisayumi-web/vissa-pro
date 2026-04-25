@@ -27,7 +27,7 @@
     <div id="menu-overlay">
         <div class="menu-card">
             <h1>Carrom Multiplayer</h1>
-            <p id="match-status">Checking connection...</p>
+            <p id="match-status">Connecting to arena...</p>
             <button class="btn" id="startBtn" style="display:none;" onclick="startGame()">PLAY NOW</button>
         </div>
     </div>
@@ -49,7 +49,7 @@
     </div>
 
 <script>
-    // --- Firebase Setup ---
+    // --- Firebase Config ---
     const firebaseConfig = {
         apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
         authDomain: "vissaprocarrom.firebaseapp.com",
@@ -66,49 +66,35 @@
     const ctx = canvas.getContext('2d');
     const msgEl = document.getElementById('game-message');
 
-    // --- Game Variables ---
     let SCALE = 1;
-    const FRICTION = 0.985;
-    const WALL_DAMPING = 0.6;
-    const SUB_STEPS = 4;
-    const STRIKER_RADIUS = 20;
-    const PIECE_RADIUS = 14;
-    const POCKET_RADIUS = 30;
-    const MAX_POWER = 45;
+    const FRICTION = 0.985, WALL_DAMPING = 0.6, SUB_STEPS = 4;
+    const STRIKER_RADIUS = 20, PIECE_RADIUS = 14, POCKET_RADIUS = 30, MAX_POWER = 45;
 
     let matchId = new URLSearchParams(window.location.search).get('matchId');
-    let myId = null; 
-    let turn = 'WAITING';
-    let pieces = [];
+    let myId = null, turn = 'WAITING', pieces = [];
     let striker = { x: 0, y: 0, vx: 0, vy: 0, radius: STRIKER_RADIUS, mass: 4, isStriker: true, visible: true, dragging: false };
-    let gameState = 'MENU';
-    let dragStart = null, dragCurrent = null;
-    let scores = { p1: 0, p2: 0 };
-    let pocketedThisTurn = false;
+    let gameState = 'MENU', dragStart = null, dragCurrent = null;
+    let scores = { p1: 0, p2: 0 }, pocketedThisTurn = false;
 
-    // --- Auth State Observer ---
     auth.onAuthStateChanged((user) => {
         if (user) {
-            myId = user.uid; // කලින් පේජ් එකෙන් ලොග් වුණු Google ID එක ගන්නවා
+            myId = user.uid;
             document.getElementById('p1-name').innerText = user.displayName;
-            document.getElementById('match-status').innerText = "Hello, " + user.displayName;
-            
-            if(matchId) {
-                initMultiplayer();
-            } else {
-                document.getElementById('match-status').innerText = "Error: Match ID Missing!";
-            }
+            if(matchId) initMultiplayer();
         } else {
-            // ලොග් වෙලා නැත්නම් විතරක් ලොගින් පේජ් එකට යවනවා
             window.location.href = "login.html"; 
         }
     });
 
-    // --- Multiplayer Logic ---
     function initMultiplayer() {
         db.collection("active_matches").doc(matchId).onSnapshot(doc => {
             const data = doc.data();
             if(!data) return;
+
+            // Sync Pieces from Firebase
+            if(data.pieces && gameState === 'MENU') {
+                pieces = data.pieces.map(p => ({ ...p, radius: PIECE_RADIUS * SCALE }));
+            }
 
             turn = (data.currentTurn === myId) ? 'PLAYER' : 'OPPONENT';
             updateUI();
@@ -121,7 +107,7 @@
             }
 
             if(gameState === 'MENU') {
-                document.getElementById('match-status').innerText = "Match Ready!";
+                document.getElementById('match-status').innerText = "Arena Ready!";
                 document.getElementById('startBtn').style.display = "block";
             }
         });
@@ -131,42 +117,34 @@
         striker.vx = Math.cos(angle) * power;
         striker.vy = Math.sin(angle) * power;
         gameState = 'MOVING';
-        pocketedThisTurn = false;
     }
 
     function updatePhysics() {
         if(gameState !== 'MOVING') return;
-
         let totalEnergy = 0;
         const all = pieces.concat(striker.visible ? [striker] : []);
 
         for(let s=0; s<SUB_STEPS; s++) {
             all.forEach(obj => {
-                obj.x += obj.vx / SUB_STEPS;
-                obj.y += obj.vy / SUB_STEPS;
-                
+                obj.x += obj.vx / SUB_STEPS; obj.y += obj.vy / SUB_STEPS;
                 const margin = 20 * SCALE;
                 if(obj.x < margin + obj.radius) { obj.x = margin + obj.radius; obj.vx *= -WALL_DAMPING; }
                 if(obj.x > canvas.width - margin - obj.radius) { obj.x = canvas.width - margin - obj.radius; obj.vx *= -WALL_DAMPING; }
                 if(obj.y < margin + obj.radius) { obj.y = margin + obj.radius; obj.vy *= -WALL_DAMPING; }
                 if(obj.y > canvas.height - margin - obj.radius) { obj.y = canvas.height - margin - obj.radius; obj.vy *= -WALL_DAMPING; }
             });
-
+            // Collision Logic (Same as before)
             for(let i=0; i<all.length; i++) {
                 for(let j=i+1; j<all.length; j++) {
                     const p1 = all[i], p2 = all[j];
-                    const dx = p2.x - p1.x, dy = p2.y - p1.y;
-                    const dist = Math.hypot(dx, dy);
-                    const minDist = p1.radius + p2.radius;
-                    if(dist < minDist) {
-                        const nx = dx/dist, ny = dy/dist;
-                        const overlap = minDist - dist;
+                    const dx = p2.x - p1.x, dy = p2.y - p1.y, dist = Math.hypot(dx, dy);
+                    if(dist < p1.radius + p2.radius) {
+                        const nx = dx/dist, ny = dy/dist, overlap = (p1.radius + p2.radius) - dist;
                         p1.x -= nx * overlap * 0.5; p1.y -= ny * overlap * 0.5;
                         p2.x += nx * overlap * 0.5; p2.y += ny * overlap * 0.5;
-                        const rvx = p2.vx - p1.vx, rvy = p2.vy - p1.vy;
-                        const velNormal = rvx*nx + rvy*ny;
-                        if(velNormal < 0) {
-                            let impulse = -(1.8) * velNormal / (1/p1.mass + 1/p2.mass);
+                        const rvx = p2.vx - p1.vx, rvy = p2.vy - p1.vy, vNormal = rvx*nx + rvy*ny;
+                        if(vNormal < 0) {
+                            let impulse = -1.8 * vNormal / (1/p1.mass + 1/p2.mass);
                             p1.vx -= (impulse * nx) / p1.mass; p1.vy -= (impulse * ny) / p1.mass;
                             p2.vx += (impulse * nx) / p2.mass; p2.vy += (impulse * ny) / p2.mass;
                         }
@@ -174,16 +152,14 @@
                 }
             }
         }
-
         all.forEach(obj => {
             obj.vx *= FRICTION; obj.vy *= FRICTION;
             if(Math.abs(obj.vx) < 0.1) obj.vx = 0;
             if(Math.abs(obj.vy) < 0.1) obj.vy = 0;
             totalEnergy += Math.abs(obj.vx) + Math.abs(obj.vy);
         });
-
         checkPockets();
-        if(totalEnergy === 0) { gameState = 'AIMING'; handleTurnEnd(); }
+        if(totalEnergy === 0) { gameState = 'AIMING'; resetStriker(); }
     }
 
     function checkPockets() {
@@ -192,19 +168,11 @@
             pockets.forEach(pk => {
                 if(Math.hypot(p.x - pk[0]*SCALE, p.y - pk[1]*SCALE) < POCKET_RADIUS*SCALE) {
                     pieces.splice(i, 1);
-                    pocketedThisTurn = true;
                     if(turn === 'PLAYER') scores.p1 += 10; else scores.p2 += 10;
                     showMsg("POCKET!", "#ffd700");
                 }
             });
         });
-    }
-
-    function handleTurnEnd() {
-        if(turn === 'PLAYER' && !pocketedThisTurn) {
-             // Turn එක මාරු කිරීමේ logic එක මෙතනට එන්න ඕනේ
-        }
-        resetStriker();
     }
 
     function resetStriker() {
@@ -217,8 +185,14 @@
         ctx.fillStyle = '#f3e5ab'; ctx.fillRect(0,0,canvas.width,canvas.height);
         ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = 2;
         ctx.strokeRect(60*SCALE, 60*SCALE, canvas.width-120*SCALE, canvas.height-120*SCALE);
-        pieces.forEach(p => drawPiece(p));
-        if(striker.visible) drawPiece(striker);
+        pieces.forEach(p => {
+            ctx.beginPath(); ctx.arc(p.x, p.y, PIECE_RADIUS*SCALE, 0, Math.PI*2);
+            ctx.fillStyle = p.type === 'white' ? '#fff' : '#333'; ctx.fill(); ctx.stroke();
+        });
+        if(striker.visible) {
+            ctx.beginPath(); ctx.arc(striker.x, striker.y, STRIKER_RADIUS*SCALE, 0, Math.PI*2);
+            ctx.fillStyle = '#ffeb3b'; ctx.fill(); ctx.stroke();
+        }
         if(gameState === 'AIMING' && turn === 'PLAYER' && striker.dragging) {
             ctx.beginPath(); ctx.moveTo(striker.x, striker.y);
             ctx.lineTo(striker.x + (dragStart.x - dragCurrent.x)*2, striker.y + (dragStart.y - dragCurrent.y)*2);
@@ -226,25 +200,27 @@
         }
     }
 
-    function drawPiece(p) {
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
-        ctx.fillStyle = p.isStriker ? '#ffeb3b' : (p.type === 'white' ? '#fff' : '#333');
-        ctx.fill(); ctx.stroke();
-    }
-
-    function updateUI() {
-        document.getElementById('p1-badge').className = turn === 'PLAYER' ? 'player-badge active' : 'player-badge';
-        document.getElementById('p2-badge').className = turn === 'OPPONENT' ? 'player-badge active' : 'player-badge';
-        document.getElementById('score-p1').innerText = scores.p1;
-        document.getElementById('score-p2').innerText = scores.p2;
-    }
-
-    function startGame() {
+    async function startGame() {
         document.getElementById('menu-overlay').style.display = 'none';
         gameState = 'AIMING';
         resize();
-        // ගල් ටික මැදට සකස් කිරීම
-        for(let i=0; i<9; i++) pieces.push({x: 300*SCALE + Math.random()*20, y: 300*SCALE + Math.random()*20, vx:0, vy:0, radius: PIECE_RADIUS*SCALE, mass:1, type: i%2==0?'white':'black'});
+
+        // Check if pieces exist in DB, if not create them
+        const doc = await db.collection("active_matches").doc(matchId).get();
+        if(!doc.data().pieces) {
+            let initialPieces = [];
+            for(let i=0; i<9; i++) {
+                initialPieces.push({
+                    x: 300 + (Math.random()*40-20), 
+                    y: 300 + (Math.random()*40-20), 
+                    vx:0, vy:0, mass:1, 
+                    type: i%2==0?'white':'black'
+                });
+            }
+            await db.collection("active_matches").doc(matchId).update({ pieces: initialPieces });
+            pieces = initialPieces.map(p => ({ ...p, x: p.x*SCALE, y: p.y*SCALE }));
+        }
+
         resetStriker();
         requestAnimationFrame(function loop() { draw(); updatePhysics(); requestAnimationFrame(loop); });
     }
@@ -253,7 +229,6 @@
         const size = Math.min(window.innerWidth * 0.95, 600);
         canvas.width = canvas.height = size;
         SCALE = size / 600;
-        striker.radius = STRIKER_RADIUS * SCALE;
     }
 
     canvas.addEventListener('touchstart', e => {
@@ -284,6 +259,13 @@
             executeShot(power, angle);
         }
     });
+
+    function updateUI() {
+        document.getElementById('p1-badge').className = turn === 'PLAYER' ? 'player-badge active' : 'player-badge';
+        document.getElementById('p2-badge').className = turn === 'OPPONENT' ? 'player-badge active' : 'player-badge';
+        document.getElementById('score-p1').innerText = scores.p1;
+        document.getElementById('score-p2').innerText = scores.p2;
+    }
 
     function showMsg(txt, col) {
         msgEl.innerText = txt; msgEl.style.borderColor = col; msgEl.style.opacity = 1;
