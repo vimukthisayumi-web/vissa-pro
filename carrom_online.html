@@ -27,8 +27,7 @@
     <div id="menu-overlay">
         <div class="menu-card">
             <h1>Carrom Multiplayer</h1>
-            <p id="match-status">Please Login to Play</p>
-            <button class="btn" id="loginBtn" onclick="loginWithGoogle()">LOGIN WITH GOOGLE</button>
+            <p id="match-status">Checking connection...</p>
             <button class="btn" id="startBtn" style="display:none;" onclick="startGame()">PLAY NOW</button>
         </div>
     </div>
@@ -36,7 +35,7 @@
     <div class="ui-top">
         <div class="player-badge" id="p1-badge">
             <div class="score-val" id="score-p1">0</div>
-            <div id="p1-name">YOU</div>
+            <div id="p1-name">Loading...</div>
         </div>
         <div class="player-badge" id="p2-badge">
             <div id="p2-name">OPPONENT</div>
@@ -78,7 +77,7 @@
     const MAX_POWER = 45;
 
     let matchId = new URLSearchParams(window.location.search).get('matchId');
-    let myId = null; // Google UID එක මෙතනට ලැබෙයි
+    let myId = null; 
     let turn = 'WAITING';
     let pieces = [];
     let striker = { x: 0, y: 0, vx: 0, vy: 0, radius: STRIKER_RADIUS, mass: 4, isStriker: true, visible: true, dragging: false };
@@ -87,25 +86,21 @@
     let scores = { p1: 0, p2: 0 };
     let pocketedThisTurn = false;
 
-    // --- Google Login & Auth Observer ---
-    function loginWithGoogle() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch(err => alert(err.message));
-    }
-
+    // --- Auth State Observer ---
     auth.onAuthStateChanged((user) => {
         if (user) {
-            myId = user.uid; // Google ID එක පාවිච්චි කිරීම
+            myId = user.uid; // කලින් පේජ් එකෙන් ලොග් වුණු Google ID එක ගන්නවා
             document.getElementById('p1-name').innerText = user.displayName;
-            document.getElementById('loginBtn').style.display = 'none';
-            document.getElementById('match-status').innerText = "Logged in as " + user.displayName;
+            document.getElementById('match-status').innerText = "Hello, " + user.displayName;
             
-            // ලොග් වුණාට පස්සේ Multiplayer පටන් ගන්න
-            if(matchId) initMultiplayer();
-            else document.getElementById('match-status').innerText = "No Match ID Found!";
+            if(matchId) {
+                initMultiplayer();
+            } else {
+                document.getElementById('match-status').innerText = "Error: Match ID Missing!";
+            }
         } else {
-            document.getElementById('loginBtn').style.display = 'block';
-            document.getElementById('startBtn').style.display = 'none';
+            // ලොග් වෙලා නැත්නම් විතරක් ලොගින් පේජ් එකට යවනවා
+            window.location.href = "login.html"; 
         }
     });
 
@@ -119,7 +114,6 @@
             updateUI();
 
             if(data.lastShot && data.lastShot.playedBy !== myId && data.lastShot.playedBy !== "SYNCED") {
-                // Mirror Opponent Shot
                 striker.x = canvas.width - (data.lastShot.startX * SCALE);
                 striker.y = 90 * SCALE;
                 executeShot(data.lastShot.power, data.lastShot.angle + Math.PI);
@@ -127,7 +121,7 @@
             }
 
             if(gameState === 'MENU') {
-                document.getElementById('match-status').innerText = "Ready to Play!";
+                document.getElementById('match-status').innerText = "Match Ready!";
                 document.getElementById('startBtn').style.display = "block";
             }
         });
@@ -207,9 +201,8 @@
     }
 
     function handleTurnEnd() {
-        if(turn === 'PLAYER') {
-            // මෙතනදී turn එක මාරු කිරීමේ Logic එක දාන්න පුළුවන්
-            db.collection("active_matches").doc(matchId).update({ currentTurn: pocketedThisTurn ? myId : "OPPONENT_ID" });
+        if(turn === 'PLAYER' && !pocketedThisTurn) {
+             // Turn එක මාරු කිරීමේ logic එක මෙතනට එන්න ඕනේ
         }
         resetStriker();
     }
@@ -250,7 +243,8 @@
         document.getElementById('menu-overlay').style.display = 'none';
         gameState = 'AIMING';
         resize();
-        for(let i=0; i<9; i++) pieces.push({x: 300*SCALE + Math.random()*40, y: 300*SCALE + Math.random()*40, vx:0, vy:0, radius: PIECE_RADIUS*SCALE, mass:1, type: i%2==0?'white':'black'});
+        // ගල් ටික මැදට සකස් කිරීම
+        for(let i=0; i<9; i++) pieces.push({x: 300*SCALE + Math.random()*20, y: 300*SCALE + Math.random()*20, vx:0, vy:0, radius: PIECE_RADIUS*SCALE, mass:1, type: i%2==0?'white':'black'});
         resetStriker();
         requestAnimationFrame(function loop() { draw(); updatePhysics(); requestAnimationFrame(loop); });
     }
