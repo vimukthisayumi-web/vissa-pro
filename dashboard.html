@@ -12,13 +12,10 @@
         .user-info { display: flex; align-items: center; gap: 10px; }
         .avatar { width: 45px; height: 45px; background: orange; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; overflow: hidden; border: 2px solid gold; }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* UID Styling */
         #user-uid { font-size: 10px; color: gold; cursor: pointer; background: rgba(255,215,0,0.1); padding: 2px 6px; border-radius: 4px; border: 0.5px dashed gold; display: inline-block; margin-top: 2px; }
-
         .wallet { background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 20px; display: flex; align-items: center; gap: 8px; border: 1px solid gold; cursor: pointer; }
 
-        /* Game Card - මෙන්න මෙතන මම අලුත් පින්තූර ලින්ක් එකක් දැම්මා */
+        /* Game Card */
         .game-card { 
             background: #1a1a4f url('https://play-movies.googleusercontent.com/vx_S_0QYJ5bK_g950vEa4vO0G5gL6yP2E8wGk8D0A5T5n0Y1vJg5N3e5N2wD2Q') center; 
             background-size: cover; 
@@ -30,39 +27,20 @@
             overflow: hidden;
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
-        
-        .card-overlay { 
-            background: linear-gradient(to top, rgba(0,0,0,0.8) 20%, transparent); 
-            padding: 20px; 
-            height: 100%; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: flex-end; 
-            align-items: center;
-        }
-        .play-btn { 
-            background: linear-gradient(45deg, #ffcc00, #ff6600); 
-            color: black; 
-            border: none; 
-            padding: 12px 40px; 
-            border-radius: 50px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            margin-bottom: 20px; /* Play button එක පොඩ්ඩක් උඩට */
-            box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4);
-            transition: 0.3s;
-        }
+        .card-overlay { background: linear-gradient(to top, rgba(0,0,0,0.8) 20%, transparent); padding: 20px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+        .play-btn { background: linear-gradient(45deg, #ffcc00, #ff6600); color: black; border: none; padding: 12px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4); transition: 0.3s; }
         .play-btn:active { transform: scale(0.9); }
 
-        /* Modal, Bottom Nav, and Scripts (කලින් තිබූ පරිදිමයි) */
+        /* Bottom Nav */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: #100a2e; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000;}
+        .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; text-decoration: none; flex: 1;}
+        .nav-item.active { color: gold; }
+        
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
         .modal-content { background: #1a1a4f; margin: 30% auto; padding: 20px; border: 2px solid gold; width: 80%; border-radius: 20px; text-align: center; }
         .mode-option { display: flex; align-items: center; padding: 15px; margin-bottom: 12px; border-radius: 12px; cursor: pointer; color: white; }
         .online { background: linear-gradient(to right, #00c6ff, #0072ff); }
         .practice { background: linear-gradient(to right, #56ab2f, #a8e063); }
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: #100a2e; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 1000;}
-        .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; text-decoration: none; flex: 1;}
-        .nav-item.active { color: gold; }
     </style>
 </head>
 <body>
@@ -77,7 +55,8 @@
             </div>
         </div>
         <div class="wallet" onclick="goToPage('wallet.html')">
-            <span id="wallet-balance" style="color:gold; font-weight:bold;">LKR 0</span>
+            <span style="color:gold;">LKR </span>
+            <span id="user-balance" style="color:gold; font-weight:bold;">0</span>
             <span style="background:green; border-radius:50%; padding:0 5px; color: white;">+</span>
         </div>
     </div>
@@ -92,14 +71,8 @@
     <div id="gameModal" class="modal">
         <div class="modal-content">
             <h3 style="color:gold; margin-top:0;">SELECT MODE</h3>
-            <div class="mode-option online" onclick="goToPage('carrom_online.html')">
-                <div style="font-size:25px; margin-right:15px;">🌐</div>
-                <div style="text-align:left;"><b>PLAY ONLINE</b></div>
-            </div>
-            <div class="mode-option practice" onclick="goToPage('carrom_practice.html')">
-                <div style="font-size:25px; margin-right:15px;">🎓</div>
-                <div style="text-align:left;"><b>FREE PRACTICE</b></div>
-            </div>
+            <div class="mode-option online" onclick="goToPage('carrom_online.html')">🌐 <b style="margin-left:15px;">PLAY ONLINE</b></div>
+            <div class="mode-option practice" onclick="goToPage('carrom_practice.html')">🎓 <b style="margin-left:15px;">FREE PRACTICE</b></div>
             <button style="background:none; border:none; color:white; margin-top: 10px;" onclick="closeModal()">CANCEL</button>
         </div>
     </div>
@@ -122,8 +95,7 @@
             projectId: "vissaprocarrom",
             storageBucket: "vissaprocarrom.firebasestorage.app",
             messagingSenderId: "722305696915",
-            appId: "1:722305696915:web:056e8be25a245ac29c7966",
-            measurementId: "G-KCKJLGX5J5"
+            appId: "1:722305696915:web:056e8be25a245ac29c7966"
         };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
@@ -133,15 +105,24 @@
             if (user) {
                 document.getElementById('user-uid').innerText = "UID: " + user.uid;
                 if (user.photoURL) document.getElementById('avatar-container').innerHTML = `<img src="${user.photoURL}">`;
+                
                 db.collection("users").doc(user.uid).get().then((doc) => {
                     document.getElementById('user-name').innerText = (doc.exists && doc.data().username) ? doc.data().username : user.displayName;
+                });
+
+                // --- මෙන්න මේ කොටස තමයි වැදගත්ම දේ ---
+                // බැලන්ස් එක ලයිව් අලුත් කරන කෝඩ් එක
+                db.collection("users").doc(user.uid).onSnapshot((doc) => {
+                    if (doc.exists && doc.data().balance !== undefined) {
+                        document.getElementById('user-balance').innerText = doc.data().balance;
+                    } else {
+                        document.getElementById('user-balance').innerText = "0";
+                    }
                 });
             } else window.location.href = "index.html";
         });
 
-        function copyUID() {
-            navigator.clipboard.writeText(auth.currentUser.uid).then(() => alert("User ID එක පිටපත් කරගත්තා! ✅"));
-        }
+        function copyUID() { navigator.clipboard.writeText(auth.currentUser.uid).then(() => alert("UID Copied!")); }
         function goToPage(p) { window.location.href = p; }
         function showModal() { document.getElementById('gameModal').style.display = 'block'; }
         function closeModal() { document.getElementById('gameModal').style.display = 'none'; }
