@@ -14,6 +14,7 @@
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #111; color: white; box-sizing: border-box; }
         button { width: 100%; padding: 15px; background: gold; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: black; font-size: 16px; transition: 0.3s; }
         button:active { transform: scale(0.98); }
+        button:disabled { background: #555; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -36,7 +37,7 @@
         <label>රිසිට් පතේ අංකය (Reference Number)</label>
         <input type="text" id="ref-number" placeholder="Eg: 123456789">
         
-        <button onclick="submitDeposit()">Submit Request</button>
+        <button id="submitBtn" onclick="submitDeposit()">Submit Request</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -53,27 +54,60 @@
             appId: "1:722305696915:web:056e8be25a245ac29c7966",
             measurementId: "G-KCKJLGX5J5"
         };
+        
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
-        function submitDeposit() {
-            const user = firebase.auth().currentUser;
+        let currentUserID = null;
+
+        // යූසර් ලොග් වෙලා ඉන්නවද කියලා පරීක්ෂා කිරීම
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUserID = user.uid;
+                console.log("Logged in as:", user.uid);
+            } else {
+                alert("කරුණාකර පළමුව ලොග් වන්න!");
+                window.location.href = "index.html";
+            }
+        });
+
+        async function submitDeposit() {
             const amountVal = document.getElementById('deposit-amount').value;
             const refNum = document.getElementById('ref-number').value;
+            const submitBtn = document.getElementById('submitBtn');
 
-            if (user && amountVal && refNum) {
-                db.collection("deposits").add({
-                    uid: user.uid,
-                    userName: user.displayName || "Gamer",
-                    amount: parseFloat(amountVal),
-                    reference: refNum,
-                    status: "pending",
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    alert("විස්තර යොමු කළා! Admin පරීක්ෂා කර සල්ලි එකතු කරනු ඇත. ✅");
+            if (!currentUserID) {
+                alert("පරිශීලක හඳුනාගැනීමේ දෝෂයකි. නැවත ලොග් වන්න.");
+                return;
+            }
+
+            if (amountVal && refNum) {
+                // බටන් එක Disable කරනවා දෙපාරක් එබීම වැලැක්වීමට
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Processing...";
+
+                try {
+                    await db.collection("deposits").add({
+                        uid: currentUserID,
+                        amount: parseFloat(amountVal),
+                        reference: refNum,
+                        status: "pending",
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    alert("විස්තර සාර්ථකව යොමු කළා! ✅\nAdmin පරීක්ෂා කර සල්ලි එකතු කරනු ඇත.");
                     window.location.href = "dashboard.html";
-                });
-            } else { alert("කරුණාකර සියලු විස්තර පුරවන්න."); }
+
+                } catch (error) {
+                    console.error("Error adding document: ", error);
+                    alert("දත්ත යැවීමේදී දෝෂයක් සිදු විය: " + error.message);
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Submit Request";
+                }
+            } else {
+                alert("කරුණාකර සියලු විස්තර නිවැරදිව පුරවන්න.");
+            }
         }
     </script>
 </body>
