@@ -12,7 +12,7 @@
         .loader { border: 4px solid #333; border-top: 4px solid gold; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 15px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .finding-text { font-size: 14px; color: gold; margin-bottom: 10px; letter-spacing: 1px; }
-        #error-display { color: #ff4444; font-size: 11px; margin-top: 15px; padding: 10px; background: rgba(255,0,0,0.1); border-radius: 8px; }
+        #error-display { color: #ff4444; font-size: 11px; margin-top: 15px; word-break: break-all; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 5px; display: none; }
     </style>
 </head>
 <body>
@@ -40,8 +40,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-    <script>eruda.init();</script>
 
     <script>
         const firebaseConfig = {
@@ -73,47 +71,55 @@
             const errorDisplay = document.getElementById('error-display');
             
             try {
-                const snapshot = await waitingRef.where("fee", "==", fee).get();
-                let found = false;
+                // 1. කලින් සිටි ප්ලේයර්ස්ලා සෙවීම (තමන් නොවන)
+                const snapshot = await waitingRef.where("fee", "==", fee).orderBy("time", "asc").limit(1).get();
                 
-                snapshot.forEach(doc => {
-                    if (doc.id !== myId && !found) {
+                let found = false;
+                if (!snapshot.empty) {
+                    const doc = snapshot.docs[0];
+                    if (doc.id !== myId) {
                         found = true;
                         const opponentId = doc.id;
-                        db.collection("active_matches").doc(opponentId).set({
+                        
+                        await db.collection("active_matches").doc(opponentId).set({
                             player1: opponentId,
                             player2: myId,
                             fee: fee,
                             status: "playing",
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        }).then(() => {
-                            waitingRef.doc(opponentId).delete();
-                            updateUIFound();
-                            goToGame(opponentId);
                         });
+
+                        await waitingRef.doc(opponentId).delete();
+                        updateUIFound();
+                        goToGame(opponentId);
                     }
-                });
+                }
 
                 if (!found) {
+                    // කෙනෙක් නැතිනම් තමන්ව ලැයිස්තුවට එක් කිරීම
                     await waitingRef.doc(myId).set({
                         uid: myId,
                         fee: fee,
                         time: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
-                    const unsubscribe = db.collection("active_matches").doc(myId).onSnapshot(doc => {
+                    // වෙනත් කෙනෙක් මැච් එකක් සාදන තෙක් බලා සිටීම
+                    db.collection("active_matches").doc(myId).onSnapshot(doc => {
                         if (doc.exists) {
-                            unsubscribe();
                             updateUIFound();
                             goToGame(myId);
                         }
                     });
                 }
             } catch (err) {
-                console.error("Firebase Error:", err);
+                console.error("Matchmaking error:", err);
+                errorDisplay.style.display = "block";
                 const link = err.message.match(/https:\/\/console\.firebase\.google\.com[^\s]+/);
-                errorDisplay.innerHTML = "දෝෂයක් සිදුවුණා! <br><br>" + 
-                    (link ? `<a href='${link[0]}' target='_blank' style='color:white; font-weight:bold;'>මෙතන ඔබා Index එක සාදන්න</a>` : err.message);
+                if (link) {
+                    errorDisplay.innerHTML = `<a href="${link[0]}" target="_blank" style="color: gold;">මෙතන ඔබා Index එක සාදන්න (අත්‍යවශ්‍යයි)</a>`;
+                } else {
+                    errorDisplay.innerText = "Error: " + err.message;
+                }
             }
         }
 
