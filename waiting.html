@@ -2,64 +2,106 @@
 <html lang="si">
 <head>
     <meta charset="UTF-8">
-    <title>VISSA PRO - Waiting Room</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VISSA PRO - Matching</title>
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 2s linear infinite; margin-bottom: 20px; }
+        body { background: #050510; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }
+        .match-box { text-align: center; background: #0d0d2b; padding: 30px; border-radius: 20px; border: 2px solid gold; width: 80%; }
+        .p-img { width: 70px; height: 70px; border: 2px solid gold; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; background: #222; margin: 0 auto; }
+        .vs-circle { width: 50px; height: 50px; background: gold; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 20px auto; }
+        .loader { border: 4px solid #333; border-top: 4px solid gold; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 15px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .player-info { display: flex; gap: 50px; align-items: center; }
-        .vs { font-size: 40px; font-weight: bold; color: gold; }
-        .avatar { width: 80px; height: 80px; background: #333; border-radius: 50%; border: 3px solid white; }
     </style>
 </head>
 <body>
 
-    <div class="loader"></div>
-    <h2 id="status">ප්‍රතිවාදියෙකු සොයමින්...</h2>
-
-    <div class="player-info">
-        <div id="player1">
-            <div class="avatar"></div>
-            <p>ඔබ</p>
+    <div class="match-box">
+        <h3 id="status">ප්‍රතිවාදියෙකු සොයමින්...</h3>
+        <div class="loader"></div>
+        
+        <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 20px;">
+            <div>
+                <div class="p-img" id="my-avatar">ඔබ</div>
+                <p style="font-size: 12px; margin-top: 8px;">ඔබ</p>
+            </div>
+            <div class="vs-circle">VS</div>
+            <div>
+                <div class="p-img" style="border-style: dashed; opacity: 0.5;">?</div>
+                <p style="font-size: 12px; margin-top: 8px; color: #888;">සොයමින්...</p>
+            </div>
         </div>
-        <div class="vs">VS</div>
-        <div id="player2">
-            <div class="avatar" style="opacity: 0.3;"></div>
-            <p>???</p>
-        </div>
+        
+        <button onclick="cancelMatch()" style="background:none; border:1px solid red; color:red; padding:8px 20px; border-radius:10px; margin-top: 30px; cursor:pointer;">CANCEL</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
     <script>
-        // Firebase Config (ඔයාගේ කලින් එකම මෙතනට දාන්න)
-        const firebaseConfig = { /* ... */ };
-        firebase.initializeApp(firebaseConfig);
+        const firebaseConfig = {
+            apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
+            authDomain: "vissaprocarrom.firebaseapp.com",
+            projectId: "vissaprocarrom",
+            storageBucket: "vissaprocarrom.firebasestorage.app",
+            messagingSenderId: "722305696915",
+            appId: "1:722305696915:web:056e8be25a245ac29c7966"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
-        const matchId = "ROOM_1"; // මේක dynamic විදිහට ගන්න පුළුවන්
+        const urlParams = new URLSearchParams(window.location.search);
+        const fee = parseInt(urlParams.get('fee'));
 
-        function startMatchmaking() {
-            const matchRef = db.collection("active_matches").doc(matchId);
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                findMatch(user.uid);
+            } else {
+                window.location.href = "index.html";
+            }
+        });
 
-            matchRef.onSnapshot((doc) => {
-                const data = doc.data();
+        async function findMatch(myId) {
+            // 1. මුලින්ම බලමු මේ Fee එකටම තව කෙනෙක් ඉන්නවද කියලා
+            const waitingRef = db.collection("waiting_players");
+            const snapshot = await waitingRef.where("fee", "==", fee).where("uid", "!=", myId).limit(1).get();
+
+            if (!snapshot.empty) {
+                // කෙනෙක් ඉන්නවා! එයා එක්ක මැච් එක පටන් ගමු
+                const opponent = snapshot.docs[0].data();
+                const matchId = opponent.uid; // අපි මැච් ID එක විදිහට ප්‍රතිවාදියාගේ ID එක පාවිච්චි කරනවා
+
+                await db.collection("active_matches").doc(matchId).set({
+                    player1: opponent.uid,
+                    player2: myId,
+                    fee: fee,
+                    status: "playing",
+                    createdAt: Date.now()
+                });
+
+                // එයාව waiting list එකෙන් අයින් කරන්න
+                await waitingRef.doc(opponent.uid).delete();
                 
-                if (data && data.host && data.guest) {
-                    // දෙන්නාම ඉන්නවා! ගේම් එකට යමු.
-                    document.getElementById('status').innerText = "ප්‍රතිවාදියා හමුවුණා! සූදානම් වන්න...";
-                    setTimeout(() => {
-                        window.location.href = `game.html?matchId=${matchId}`;
-                    }, 2000);
-                } else if (data && data.host) {
-                    // දැනට ඉන්නේ host විතරයි
-                    document.getElementById('status').innerText = "ප්‍රතිවාදියෙකු එනතුරු බලා සිටී...";
-                }
-            });
+                // දෙන්නවම ගේම් එකට යවන්න
+                window.location.href = "carrom_online.html?matchId=" + matchId;
+            } else {
+                // කවුරුත් නැහැ, මම ඉන්න ඕනේ කෙනෙක් එනකල්
+                // මගේ ID එකෙන් active_matches එක දිහා බලාගෙන ඉන්නවා කෙනෙක් මාව සම්බන්ධ කරනකම්
+                db.collection("active_matches").doc(myId).onSnapshot(doc => {
+                    if (doc.exists) {
+                        window.location.href = "carrom_online.html?matchId=" + myId;
+                    }
+                });
+            }
         }
 
-        startMatchmaking();
+        function cancelMatch() {
+            const myId = auth.currentUser.uid;
+            db.collection("waiting_players").doc(myId).delete().then(() => {
+                window.location.href = "dashboard.html";
+            });
+        }
     </script>
 </body>
 </html>
