@@ -12,7 +12,7 @@
         .loader { border: 4px solid #333; border-top: 4px solid gold; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 15px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .finding-text { font-size: 14px; color: gold; margin-bottom: 10px; letter-spacing: 1px; }
-        #error-display { color: #ff4444; font-size: 11px; margin-top: 10px; word-break: break-all; }
+        #error-display { color: #ff4444; font-size: 11px; margin-top: 15px; padding: 10px; background: rgba(255,0,0,0.1); border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -40,7 +40,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
     <script>eruda.init();</script>
 
@@ -74,16 +73,13 @@
             const errorDisplay = document.getElementById('error-display');
             
             try {
-                // 1. මේ Fee එකට ඉන්න අයව සෙවුම් කරනවා
-                // orderBy පාවිච්චි කරොත් අනිවාර්යයෙන්ම Index එකක් හදන්න ලින්ක් එක Console එකේ එයි
                 const snapshot = await waitingRef.where("fee", "==", fee).get();
-                
                 let found = false;
+                
                 snapshot.forEach(doc => {
                     if (doc.id !== myId && !found) {
                         found = true;
                         const opponentId = doc.id;
-                        
                         db.collection("active_matches").doc(opponentId).set({
                             player1: opponentId,
                             player2: myId,
@@ -105,7 +101,6 @@
                         time: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
-                    // වෙන කෙනෙක් මාව ගේම් එකට ගන්නකල් බලන් ඉන්නවා
                     const unsubscribe = db.collection("active_matches").doc(myId).onSnapshot(doc => {
                         if (doc.exists) {
                             unsubscribe();
@@ -116,7 +111,9 @@
                 }
             } catch (err) {
                 console.error("Firebase Error:", err);
-                errorDisplay.innerText = "Error: " + err.message;
+                const link = err.message.match(/https:\/\/console\.firebase\.google\.com[^\s]+/);
+                errorDisplay.innerHTML = "දෝෂයක් සිදුවුණා! <br><br>" + 
+                    (link ? `<a href='${link[0]}' target='_blank' style='color:white; font-weight:bold;'>මෙතන ඔබා Index එක සාදන්න</a>` : err.message);
             }
         }
 
