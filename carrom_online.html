@@ -1,65 +1,448 @@
 <!DOCTYPE html>
-<html lang="si">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VISSA PRO - Online Carrom</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Carrom King 3D - Pro Edition</title>
     <style>
-        body { background: #050510; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        canvas { border: 5px solid gold; background: #fdf5e6; cursor: crosshair; }
-        .info { margin-bottom: 10px; color: gold; font-size: 20px; }
+        :root {
+            --bg-dark: #0f172a;
+            --wood-frame: #4a2c16;
+            --wood-light: #7a4a2a;
+            --board-surface: #f7e9b7;
+            --striker-gold: linear-gradient(135deg, #ffd700, #b8860b);
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            height: 100vh; overflow: hidden; color: white;
+            user-select: none; touch-action: none;
+        }
+
+        /* --- UI Overlay --- */
+        .ui-top {
+            position: absolute; top: 15px; width: 100%; max-width: 600px;
+            display: flex; justify-content: space-between; padding: 0 20px; box-sizing: border-box;
+            z-index: 10; pointer-events: none;
+        }
+
+        .player-badge {
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px);
+            padding: 10px 18px; border-radius: 30px;
+            display: flex; align-items: center; gap: 12px;
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .player-badge.active {
+            border-color: #fbbf24;
+            background: rgba(30, 41, 59, 0.9);
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.4);
+            transform: scale(1.1);
+        }
+
+        .avatar {
+            width: 42px; height: 42px; border-radius: 50%; 
+            border: 2.5px solid #fff; overflow: hidden; background: #1e293b;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .score-box { flex-grow: 1; }
+        .score-val { font-size: 24px; font-weight: 900; color: #fbbf24; line-height: 1; }
+        .score-label { font-size: 10px; text-transform: uppercase; color: #94a3b8; font-weight: bold; }
+
+        /* --- Game Board --- */
+        #game-container {
+            position: relative;
+            border: 22px solid var(--wood-frame);
+            border-radius: 15px;
+            box-shadow: 
+                inset 0 0 40px rgba(0,0,0,0.7),
+                0 30px 70px rgba(0,0,0,0.8);
+            width: 92vw; height: 92vw;
+            max-width: 580px; max-height: 580px;
+            background: var(--board-surface);
+            box-sizing: border-box;
+            z-index: 1;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; cursor: crosshair; border-radius: 5px; }
+
+        /* --- Menus --- */
+        #menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(2, 6, 23, 0.92); z-index: 999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+
+        .menu-card {
+            background: #fff; color: #1e293b; padding: 35px; border-radius: 24px;
+            text-align: center; width: 85%; max-width: 320px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .menu-card h1 { 
+            margin: 0 0 10px; font-size: 32px; color: #4a2c16; 
+            font-weight: 900; text-transform: uppercase;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: none; color: white; padding: 16px;
+            font-size: 18px; font-weight: 800; border-radius: 16px;
+            cursor: pointer; margin-top: 20px; width: 100%;
+            box-shadow: 0 4px 0 #92400e; transition: 0.1s;
+        }
+        .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #92400e; }
+
+        #game-message {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(15, 23, 42, 0.95); color: white; padding: 12px 30px;
+            border-radius: 50px; font-size: 24px; font-weight: 800;
+            pointer-events: none; opacity: 0; transition: 0.3s;
+            z-index: 50; border: 3px solid #fbbf24; box-shadow: 0 0 30px rgba(251, 191, 36, 0.4);
+        }
+
+        .controls-hint {
+            margin-top: 20px; font-size: 13px; font-weight: 600; color: #94a3b8;
+            background: rgba(255,255,255,0.05); padding: 10px 25px; border-radius: 30px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="info" id="status">ක්‍රීඩාව ආරම්භ වෙමින්...</div>
-    <canvas id="carromBoard" width="400" height="400"></canvas>
+    <div id="menu-overlay">
+        <div class="menu-card">
+            <h1>VISSA PRO</h1>
+            <p style="font-weight: 600; color: #64748b;">Premium Carrom Experience</p>
+            <div style="font-size: 13px; color: #475569; margin: 20px 0; text-align: left; background: #f1f5f9; padding: 15px; border-radius: 15px; line-height: 1.6;">
+                🎯 <b>Aim:</b> Drag Striker left/right<br>
+                ⚡ <b>Power:</b> Pull back to charge<br>
+                🏆 <b>Goal:</b> Pocket your color pieces!
+            </div>
+            <button class="btn" onclick="startGame()">START GAME</button>
+        </div>
+    </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <div class="ui-top">
+        <div class="player-badge active" id="p1-badge">
+            <div class="avatar"><img src="https://api.dicebear.com/7.x/bottts/svg?seed=You" width="100%"></div>
+            <div class="score-box">
+                <div class="score-label">YOU</div>
+                <div class="score-val" id="score-p1">0</div>
+            </div>
+        </div>
+        <div class="player-badge" id="p2-badge">
+            <div class="score-box" style="text-align:right;">
+                <div class="score-label">CPU</div>
+                <div class="score-val" id="score-p2">0</div>
+            </div>
+            <div class="avatar"><img src="https://api.dicebear.com/7.x/bottts/svg?seed=CPU" width="100%"></div>
+        </div>
+    </div>
 
-    <script>
-        const firebaseConfig = {
-            // ඔයාගේ Dashboard එකේ තියෙන ඒ Config එකම මෙතනට දාන්න
-            apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
-            authDomain: "vissaprocarrom.firebaseapp.com",
-            projectId: "vissaprocarrom",
-            storageBucket: "vissaprocarrom.firebasestorage.app",
-            messagingSenderId: "722305696915",
-            appId: "1:722305696915:web:056e8be25a245ac29c7966"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+    <div id="game-container">
+        <canvas id="carromCanvas"></canvas>
+        <div id="game-message"></div>
+    </div>
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const matchId = urlParams.get('matchId'); // waiting.html එකෙන් එන ID එක
-        const canvas = document.getElementById("carromBoard");
-        const ctx = canvas.getContext("2d");
+    <div class="controls-hint">Slide to move • Pull back to strike</div>
 
-        // ඉත්තෝ අඳින Function එක
-        function drawBoard() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // මෙතනට ඔයාගේ Carrom Board design එක සහ කාසි අඳින කෝඩ් එක දාන්න
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = "black";
-            ctx.strokeRect(50, 50, 300, 300); // උදාහරණයක් විදිහට
+<script>
+    const canvas = document.getElementById('carromCanvas');
+    const ctx = canvas.getContext('2d');
+    const msgEl = document.getElementById('game-message');
+
+    let BOARD_SIZE = 600; 
+    let SCALE = 1;
+    const FRICTION = 0.988;
+    const WALL_DAMPING = 0.7; 
+    const SUB_STEPS = 5; 
+    
+    const STRIKER_RADIUS = 21; 
+    const PIECE_RADIUS = 14; 
+    const POCKET_RADIUS = 32;
+    const MAX_POWER = 48;
+
+    let gameState = 'MENU';
+    let turn = 'PLAYER'; 
+    let pieces = [];
+    
+    let striker = { 
+        x: 0, y: 0, vx: 0, vy: 0, 
+        radius: STRIKER_RADIUS, 
+        mass: 4.5, 
+        visible: true,
+        dragging: false
+    };
+    
+    let dragStart = null;
+    let dragCurrent = null;
+    let scores = { p1: 0, p2: 0 };
+    let pocketedThisTurn = false;
+
+    function resize() {
+        const container = document.getElementById('game-container');
+        const size = container.clientWidth;
+        canvas.width = size;
+        canvas.height = size;
+        BOARD_SIZE = size;
+        SCALE = size / 600;
+        striker.radius = STRIKER_RADIUS * SCALE;
+        pieces.forEach(p => p.radius = PIECE_RADIUS * SCALE);
+    }
+
+    function createPiece(x, y, type) {
+        return { x, y, vx: 0, vy: 0, radius: PIECE_RADIUS * SCALE, type, mass: 1 };
+    }
+
+    function initGame() {
+        resize();
+        pieces = [];
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const r = PIECE_RADIUS * SCALE * 2.1;
+
+        pieces.push(createPiece(cx, cy, 'red'));
+        for(let i=0; i<6; i++) {
+            const angle = i * 60 * Math.PI / 180;
+            pieces.push(createPiece(cx + Math.cos(angle)*r, cy + Math.sin(angle)*r, (i % 2 !== 0) ? 'white' : 'black'));
         }
+        const r2 = r * 2; 
+        for(let i=0; i<12; i++) {
+            const angle = (i * 30 + 15) * Math.PI / 180;
+            pieces.push(createPiece(cx + Math.cos(angle)*r2, cy + Math.sin(angle)*r2, (i % 2 === 0) ? 'white' : 'black'));
+        }
+        scores = { p1: 0, p2: 0 };
+        turn = 'PLAYER';
+        resetStriker();
+    }
 
-        // Firebase එකෙන් දත්ත ගෙන ඉත්තෝ පෙන්වීම
-        if (matchId) {
-            db.collection("active_matches").doc(matchId).onSnapshot(doc => {
-                if (doc.exists) {
-                    const gameData = doc.data();
-                    document.getElementById("status").innerText = "තරඟය ක්‍රියාත්මකයි!";
-                    // මෙතනදී gameData වල තියෙන ඉත්තන්ගේ පිහිටුම (Position) අනුව board එක update කරන්න
-                    drawBoard();
+    function resetStriker() {
+        striker.vx = 0; striker.vy = 0;
+        striker.visible = true;
+        striker.x = canvas.width / 2;
+        striker.y = (turn === 'PLAYER') ? canvas.height - (95 * SCALE) : (95 * SCALE);
+        gameState = 'AIMING';
+        updateUI();
+        if(turn === 'CPU') setTimeout(cpuTurn, 1200);
+    }
+
+    function startGame() {
+        document.getElementById('menu-overlay').style.display = 'none';
+        initGame();
+        gameLoop();
+    }
+
+    canvas.addEventListener('mousedown', sDrag);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); sDrag(e); }, {passive: false});
+    window.addEventListener('mousemove', mDrag);
+    window.addEventListener('touchmove', (e) => { e.preventDefault(); mDrag(e); }, {passive: false});
+    window.addEventListener('mouseup', eDrag);
+    window.addEventListener('touchend', eDrag);
+
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const t = e.touches ? e.touches[0] : e;
+        return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+    }
+
+    function sDrag(e) {
+        if(gameState !== 'AIMING' || turn !== 'PLAYER') return;
+        const pos = getPos(e);
+        if (Math.hypot(pos.x - striker.x, pos.y - striker.y) < striker.radius * 3) {
+            striker.dragging = true;
+            dragStart = { x: striker.x, y: striker.y };
+            dragCurrent = pos;
+        }
+    }
+
+    function mDrag(e) {
+        if(!striker.dragging) return;
+        const pos = getPos(e);
+        const baselineY = canvas.height - (95 * SCALE);
+        if (Math.abs(pos.y - baselineY) < 50 * SCALE) {
+            dragStart = null; 
+            striker.x = Math.max(75 * SCALE, Math.min(canvas.width - 75 * SCALE, pos.x));
+            striker.y = baselineY;
+        } else {
+            if(!dragStart) dragStart = { x: striker.x, y: striker.y };
+            dragCurrent = pos;
+        }
+    }
+
+    function eDrag() {
+        if(!striker.dragging) return;
+        striker.dragging = false;
+        if (dragStart && dragCurrent) {
+            const dx = dragStart.x - dragCurrent.x;
+            const dy = dragStart.y - dragCurrent.y;
+            const dist = Math.hypot(dx, dy);
+            if (dist > 15 * SCALE) {
+                const power = Math.min(dist * 0.18, MAX_POWER * SCALE);
+                shootStriker(power, Math.atan2(dy, dx));
+            }
+        }
+        dragStart = null;
+    }
+
+    function shootStriker(p, a) {
+        striker.vx = Math.cos(a) * p;
+        striker.vy = Math.sin(a) * p;
+        gameState = 'MOVING';
+        pocketedThisTurn = false;
+    }
+
+    function updatePhysics() {
+        if(gameState !== 'MOVING') return;
+        let active = false;
+        const objs = striker.visible ? [...pieces, striker] : [...pieces];
+
+        for(let s=0; s<SUB_STEPS; s++) {
+            objs.forEach(o => {
+                o.x += o.vx / SUB_STEPS; o.y += o.vy / SUB_STEPS;
+                const m = 22 * SCALE;
+                if(o.x < m+o.radius || o.x > canvas.width-m-o.radius) { o.vx *= -WALL_DAMPING; o.x = (o.x < canvas.width/2) ? m+o.radius : canvas.width-m-o.radius; }
+                if(o.y < m+o.radius || o.y > canvas.height-m-o.radius) { o.vy *= -WALL_DAMPING; o.y = (o.y < canvas.height/2) ? m+o.radius : canvas.height-m-o.radius; }
+            });
+
+            for(let i=0; i<objs.length; i++) {
+                for(let j=i+1; j<objs.length; j++) {
+                    const p1 = objs[i], p2 = objs[j];
+                    const dx = p2.x - p1.x, dy = p2.y - p1.y, d = Math.hypot(dx, dy);
+                    const min = p1.radius + p2.radius;
+                    if(d < min) {
+                        const nx = dx/d, ny = dy/d, rvx = p2.vx-p1.vx, rvy = p2.vy-p1.vy;
+                        const vNorm = rvx*nx + rvy*ny;
+                        if(vNorm < 0) {
+                            let jv = -(1.7) * vNorm / (1/p1.mass + 1/p2.mass);
+                            p1.vx -= jv*nx/p1.mass; p1.vy -= jv*ny/p1.mass;
+                            p2.vx += jv*nx/p2.mass; p2.vy += jv*ny/p2.mass;
+                        }
+                        const over = min - d;
+                        p1.x -= nx * over * 0.5; p1.y -= ny * over * 0.5;
+                        p2.x += nx * over * 0.5; p2.y += ny * over * 0.5;
+                    }
+                }
+            }
+        }
+        
+        objs.forEach(o => {
+            o.vx *= FRICTION; o.vy *= FRICTION;
+            if(Math.hypot(o.vx, o.vy) < 0.15) { o.vx = 0; o.vy = 0; }
+            else active = true;
+        });
+
+        checkPockets();
+        if(!active) handleTurnEnd();
+    }
+
+    function checkPockets() {
+        const pkts = [[28,28], [572,28], [28,572], [572,572]].map(p => [p[0]*SCALE, p[1]*SCALE]);
+        const pr = POCKET_RADIUS * SCALE;
+
+        if(striker.visible) {
+            pkts.forEach(p => {
+                if(Math.hypot(striker.x-p[0], striker.y-p[1]) < pr) {
+                    striker.visible = false; showMsg("FOUL!", "#ef4444");
+                    scores[turn === 'PLAYER' ? 'p1' : 'p2'] -= 5;
                 }
             });
-        } else {
-            document.getElementById("status").innerText = "Error: Room එකක් හමු නොවුණි.";
         }
-    </script>
+
+        for(let i=pieces.length-1; i>=0; i--) {
+            const pc = pieces[i];
+            pkts.forEach(p => {
+                if(Math.hypot(pc.x-p[0], pc.y-p[1]) < pr) {
+                    let pts = pc.type === 'red' ? 50 : 10;
+                    scores[turn === 'PLAYER' ? 'p1' : 'p2'] += pts;
+                    if(pc.type === 'red') showMsg("QUEEN!", "#f43f5e");
+                    else pocketedThisTurn = true;
+                    pieces.splice(i, 1);
+                }
+            });
+        }
+    }
+
+    function handleTurnEnd() {
+        if (pieces.length === 0) return endGame(scores.p1 > scores.p2 ? "YOU WIN!" : "CPU WINS");
+        if (!pocketedThisTurn) turn = (turn === 'PLAYER') ? 'CPU' : 'PLAYER';
+        resetStriker();
+    }
+
+    function cpuTurn() {
+        const target = pieces[Math.floor(Math.random()*pieces.length)];
+        if(target) {
+            striker.x = Math.max(100*SCALE, Math.min(canvas.width-100*SCALE, target.x + (Math.random()*20-10)));
+            const dx = target.x - striker.x, dy = target.y - striker.y;
+            shootStriker(Math.min(Math.hypot(dx, dy)*0.1 + 10, MAX_POWER)*SCALE, Math.atan2(dy, dx));
+        }
+    }
+
+    function draw() {
+        ctx.fillStyle = "#f7e9b7"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        
+        // Design
+        ctx.strokeStyle = "rgba(0,0,0,0.15)"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height/2, 80*SCALE, 0, Math.PI*2); ctx.stroke();
+        
+        // Pockets
+        ctx.fillStyle = "#0f172a";
+        [[28,28], [572,28], [28,572], [572,572]].forEach(p => {
+            ctx.beginPath(); ctx.arc(p[0]*SCALE, p[1]*SCALE, POCKET_RADIUS*SCALE, 0, Math.PI*2); ctx.fill();
+        });
+
+        // Aim line
+        if(striker.dragging && dragStart && dragCurrent) {
+            ctx.setLineDash([5, 5]); ctx.strokeStyle = "#fbbf24";
+            ctx.beginPath(); ctx.moveTo(striker.x, striker.y);
+            ctx.lineTo(striker.x + (dragStart.x-dragCurrent.x)*3, striker.y + (dragStart.y-dragCurrent.y)*3);
+            ctx.stroke(); ctx.setLineDash([]);
+        }
+
+        pieces.forEach(p => drawObject(p));
+        if(striker.visible) drawObject(striker, true);
+    }
+
+    function drawObject(o, isStriker=false) {
+        const grad = ctx.createRadialGradient(o.x-o.radius/3, o.y-o.radius/3, 2, o.x, o.y, o.radius);
+        if(isStriker) {
+            grad.addColorStop(0, "#fbbf24"); grad.addColorStop(1, "#92400e");
+        } else {
+            const colors = { white: ["#fff", "#94a3b8"], black: ["#475569", "#020617"], red: ["#fb7185", "#9f1239"] };
+            grad.addColorStop(0, colors[o.type][0]); grad.addColorStop(1, colors[o.type][1]);
+        }
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(o.x, o.y, o.radius, 0, Math.PI*2);
+        ctx.shadowBlur = 5; ctx.shadowColor = "rgba(0,0,0,0.3)";
+        ctx.fill(); ctx.shadowBlur = 0;
+    }
+
+    function showMsg(t, c) {
+        msgEl.innerText = t; msgEl.style.color = c; msgEl.style.opacity = 1;
+        setTimeout(() => msgEl.style.opacity = 0, 1500);
+    }
+
+    function updateUI() {
+        document.getElementById('p1-badge').className = turn === 'PLAYER' ? 'player-badge active' : 'player-badge';
+        document.getElementById('p2-badge').className = turn === 'CPU' ? 'player-badge active' : 'player-badge';
+        document.getElementById('score-p1').innerText = scores.p1;
+        document.getElementById('score-p2').innerText = scores.p2;
+    }
+
+    function endGame(t) {
+        gameState = 'MENU';
+        document.querySelector('.menu-card h1').innerText = t;
+        document.getElementById('menu-overlay').style.display = 'flex';
+    }
+
+    function gameLoop() {
+        updatePhysics(); draw(); requestAnimationFrame(gameLoop);
+    }
+    resize();
+</script>
 </body>
 </html>
