@@ -3,120 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Carrom King - Multiplayer</title>
+    <title>Vissa Pro Carrom - Multiplayer</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
-        :root {
-            --bg-dark: #0f172a;
-            --wood-frame: #5c3a21;
-            --wood-light: #8a5a3a;
-            --board-surface: #f3e5ab;
-        }
-
-        body {
-            margin: 0; padding: 0;
-            background: radial-gradient(circle at center, #1e3a8a 0%, #0f172a 100%);
-            font-family: 'Segoe UI', sans-serif;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            height: 100vh; overflow: hidden; color: white;
-            user-select: none; touch-action: none;
-        }
-
-        .ui-top {
-            position: absolute; top: 10px; width: 100%; max-width: 600px;
-            display: flex; justify-content: space-between; padding: 0 20px; box-sizing: border-box;
-            z-index: 10; pointer-events: none;
-        }
-
-        .player-badge {
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
-            padding: 8px 15px; border-radius: 25px;
-            display: flex; align-items: center; gap: 10px;
-            border: 2px solid rgba(255,255,255,0.1);
-            transition: all 0.3s;
-        }
-        
-        .player-badge.active {
-            border-color: #ffd700;
-            background: rgba(50, 50, 50, 0.8);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-            transform: scale(1.05);
-        }
-
-        .avatar {
-            width: 45px; height: 45px; border-radius: 50%; 
-            border: 2px solid white; overflow: hidden; background: #333;
-        }
-        
-        .score-box { text-align: right; }
+        :root { --bg-dark: #0f172a; --wood-frame: #5c3a21; --wood-light: #8a5a3a; --board-surface: #f3e5ab; }
+        body { margin: 0; padding: 0; background: radial-gradient(circle at center, #1e3a8a 0%, #0f172a 100%); font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; overflow: hidden; color: white; user-select: none; touch-action: none; }
+        .ui-top { position: absolute; top: 10px; width: 100%; max-width: 600px; display: flex; justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 10; pointer-events: none; }
+        .player-badge { background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); padding: 8px 15px; border-radius: 25px; display: flex; align-items: center; gap: 10px; border: 2px solid rgba(255,255,255,0.1); transition: all 0.3s; }
+        .player-badge.active { border-color: #ffd700; background: rgba(50, 50, 50, 0.8); box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); transform: scale(1.05); }
         .score-val { font-size: 22px; font-weight: 800; color: #ffd700; }
-        .score-label { font-size: 11px; text-transform: uppercase; color: #ccc; letter-spacing: 1px; }
-
-        #game-container {
-            position: relative;
-            border: 25px solid var(--wood-frame);
-            border-radius: 40px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 20px 60px rgba(0,0,0,0.6);
-            width: 95vw; height: 95vw;
-            max-width: 600px; max-height: 600px;
-            background: var(--board-surface);
-            box-sizing: border-box;
-            overflow: hidden;
-            z-index: 1;
-        }
-
+        #game-container { position: relative; border: 25px solid var(--wood-frame); border-radius: 40px; box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 20px 60px rgba(0,0,0,0.6); width: 95vw; height: 95vw; max-width: 600px; max-height: 600px; background: var(--board-surface); box-sizing: border-box; overflow: hidden; z-index: 1; }
         canvas { display: block; width: 100%; height: 100%; cursor: grab; }
-
-        #menu-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.85); z-index: 999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-        }
-
-        .menu-card {
-            background: white; color: #333; padding: 40px; border-radius: 20px;
-            text-align: center; width: 300px;
-        }
-
-        .btn {
-            background: linear-gradient(to bottom, #ff9933, #e68a00);
-            border: none; color: white; padding: 15px 40px;
-            font-size: 20px; font-weight: bold; border-radius: 50px;
-            cursor: pointer; margin-top: 20px; width: 100%;
-        }
-
-        #game-message {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9); color: white; padding: 10px 25px;
-            border-radius: 50px; font-size: 28px; font-weight: bold;
-            pointer-events: none; opacity: 0; transition: opacity 0.3s;
-            z-index: 50; border: 2px solid #ffd700;
-        }
+        #menu-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .menu-card { background: white; color: #333; padding: 40px; border-radius: 20px; text-align: center; width: 300px; }
+        .btn { background: linear-gradient(to bottom, #ff9933, #e68a00); border: none; color: white; padding: 15px 40px; font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer; margin-top: 20px; width: 100%; box-shadow: 0 6px #b36b00; }
+        #game-message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: white; padding: 10px 25px; border-radius: 50px; font-size: 28px; font-weight: bold; pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 50; border: 2px solid #ffd700; }
     </style>
 </head>
 <body>
 
     <div id="menu-overlay">
         <div class="menu-card">
-            <h1>Carrom PvP</h1>
-            <p>Play with a Friend!</p>
-            <button class="btn" onclick="startGame()">PLAY NOW</button>
+            <h1>Carrom Multiplayer</h1>
+            <p id="match-status">Connecting to Firebase...</p>
+            <button class="btn" id="startBtn" style="display:none;" onclick="startGame()">PLAY NOW</button>
         </div>
     </div>
 
     <div class="ui-top">
-        <div class="player-badge active" id="p1-badge">
-            <div class="avatar">P1</div>
-            <div class="score-box">
-                <div class="score-label">Player 1</div>
-                <div class="score-val" id="score-p1">0</div>
-            </div>
+        <div class="player-badge" id="p1-badge">
+            <div class="score-val" id="score-p1">0</div>
+            <div>YOU</div>
         </div>
         <div class="player-badge" id="p2-badge">
-            <div class="score-box" style="text-align:left;">
-                <div class="score-label">Player 2</div>
-                <div class="score-val" id="score-p2">0</div>
-            </div>
-            <div class="avatar">P2</div>
+            <div>OPPONENT</div>
+            <div class="score-val" id="score-p2">0</div>
         </div>
     </div>
 
@@ -126,203 +48,258 @@
     </div>
 
 <script>
+    // --- Firebase Setup ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
+        authDomain: "vissaprocarrom.firebaseapp.com",
+        projectId: "vissaprocarrom",
+        storageBucket: "vissaprocarrom.firebasestorage.app",
+        messagingSenderId: "722305696915",
+        appId: "1:722305696915:web:056e8be25a245ac29c7966"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     const canvas = document.getElementById('carromCanvas');
     const ctx = canvas.getContext('2d');
     const msgEl = document.getElementById('game-message');
 
-    let BOARD_SIZE = 600; 
+    // --- Game Configuration ---
     let SCALE = 1;
     const FRICTION = 0.985;
-    const WALL_DAMPING = 0.6; 
+    const WALL_DAMPING = 0.6;
     const SUB_STEPS = 4;
-    const STRIKER_RADIUS = 20; 
-    const PIECE_RADIUS = 14; 
+    const STRIKER_RADIUS = 20;
+    const PIECE_RADIUS = 14;
     const POCKET_RADIUS = 30;
     const MAX_POWER = 45;
 
-    let gameState = 'MENU';
-    let turn = 1; // 1 = Player 1, 2 = Player 2
+    let matchId = new URLSearchParams(window.location.search).get('matchId');
+    let myId = new URLSearchParams(window.location.search).get('playerId');
+    let turn = 'WAITING';
     let pieces = [];
-    let striker = { x: 0, y: 0, vx: 0, vy: 0, radius: STRIKER_RADIUS, mass: 4, color: '#ffeb3b', visible: true, dragging: false };
-    let dragStart = null;
-    let dragCurrent = null;
+    let striker = { x: 0, y: 0, vx: 0, vy: 0, radius: STRIKER_RADIUS, mass: 4, isStriker: true, visible: true, dragging: false };
+    let gameState = 'MENU';
+    let dragStart = null, dragCurrent = null;
     let scores = { p1: 0, p2: 0 };
     let pocketedThisTurn = false;
 
-    function resize() {
-        const container = document.getElementById('game-container');
-        const size = container.clientWidth;
-        canvas.width = size; canvas.height = size;
-        BOARD_SIZE = size; SCALE = size / 600;
-        striker.radius = STRIKER_RADIUS * SCALE;
-    }
+    // --- Physics & Multiplayer Logic ---
 
-    function initGame() {
-        resize();
-        pieces = [];
-        const cx = canvas.width / 2;
-        const cy = canvas.height / 2;
-        const r = PIECE_RADIUS * SCALE * 2.05;
-        pieces.push({x: cx, y: cy, vx: 0, vy: 0, radius: PIECE_RADIUS * SCALE, type: 'red', mass: 1});
-        for(let i=0; i<6; i++) {
-            const angle = i * 60 * Math.PI / 180;
-            pieces.push({x: cx + Math.cos(angle)*r, y: cy + Math.sin(angle)*r, vx: 0, vy: 0, radius: PIECE_RADIUS * SCALE, type: (i%2!==0?'white':'black'), mass: 1});
+    function initMultiplayer() {
+        if(!matchId) {
+            document.getElementById('match-status').innerText = "No Match ID Found!";
+            return;
         }
-        scores = { p1: 0, p2: 0 };
-        turn = 1;
-        resetStriker();
-    }
+        db.collection("active_matches").doc(matchId).onSnapshot(doc => {
+            const data = doc.data();
+            if(!data) return;
 
-    function resetStriker() {
-        striker.vx = 0; striker.vy = 0;
-        striker.visible = true;
-        striker.x = canvas.width / 2;
-        striker.y = (turn === 1) ? canvas.height - (90 * SCALE) : (90 * SCALE);
-        gameState = 'AIMING';
-        updateUI();
-    }
+            turn = (data.currentTurn === myId) ? 'PLAYER' : 'OPPONENT';
+            updateUI();
 
-    function startGame() {
-        document.getElementById('menu-overlay').style.display = 'none';
-        initGame();
-        gameLoop();
-    }
-
-    canvas.addEventListener('mousedown', startDrag);
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrag(e); });
-    window.addEventListener('mousemove', moveDrag);
-    window.addEventListener('touchmove', (e) => { e.preventDefault(); moveDrag(e); });
-    window.addEventListener('mouseup', endDrag);
-    window.addEventListener('touchend', endDrag);
-
-    function getPos(e) {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return { x: clientX - rect.left, y: clientY - rect.top };
-    }
-
-    function startDrag(e) {
-        if(gameState !== 'AIMING') return;
-        const pos = getPos(e);
-        if (Math.hypot(pos.x - striker.x, pos.y - striker.y) < striker.radius * 3) {
-            striker.dragging = true;
-            dragStart = { x: striker.x, y: striker.y };
-        }
-    }
-
-    function moveDrag(e) {
-        if(!striker.dragging) return;
-        const pos = getPos(e);
-        const baselineY = (turn === 1) ? canvas.height - (90 * SCALE) : (90 * SCALE);
-        if (Math.abs(pos.y - baselineY) < 40 * SCALE) {
-            const margin = 65 * SCALE;
-            striker.x = Math.max(margin, Math.min(canvas.width - margin, pos.x));
-            dragStart = { x: striker.x, y: striker.y };
-        } else {
-            dragCurrent = pos;
-        }
-    }
-
-    function endDrag() {
-        if(!striker.dragging) return;
-        striker.dragging = false;
-        if (dragStart && dragCurrent) {
-            const dx = dragStart.x - dragCurrent.x;
-            const dy = dragStart.y - dragCurrent.y;
-            const dist = Math.hypot(dx, dy);
-            if (dist > 10) {
-                striker.vx = Math.cos(Math.atan2(dy, dx)) * Math.min(dist * 0.2, MAX_POWER);
-                striker.vy = Math.sin(Math.atan2(dy, dx)) * Math.min(dist * 0.2, MAX_POWER);
-                gameState = 'MOVING';
-                pocketedThisTurn = false;
+            if(data.lastShot && data.lastShot.playedBy !== myId && data.lastShot.playedBy !== "SYNCED") {
+                // Mirror Opponent's Shot
+                striker.x = canvas.width - (data.lastShot.startX * (canvas.width/600));
+                striker.y = 90 * SCALE; // Opponent is at top
+                executeShot(data.lastShot.power, data.lastShot.angle + Math.PI);
+                db.collection("active_matches").doc(matchId).update({ "lastShot.playedBy": "SYNCED" });
             }
-        }
-        dragStart = null; dragCurrent = null;
+
+            if(gameState === 'MENU') {
+                document.getElementById('match-status').innerText = "Match Ready!";
+                document.getElementById('startBtn').style.display = "block";
+            }
+        });
+    }
+
+    function executeShot(power, angle) {
+        striker.vx = Math.cos(angle) * power;
+        striker.vy = Math.sin(angle) * power;
+        gameState = 'MOVING';
+        pocketedThisTurn = false;
     }
 
     function updatePhysics() {
         if(gameState !== 'MOVING') return;
-        let moving = false;
-        const all = [...pieces, striker];
+
+        let totalEnergy = 0;
+        const all = pieces.concat(striker.visible ? [striker] : []);
+
         for(let s=0; s<SUB_STEPS; s++) {
-            all.forEach(p => {
-                p.x += p.vx/SUB_STEPS; p.y += p.vy/SUB_STEPS;
-                const r = p.radius; const m = 20*SCALE;
-                if(p.x < m+r || p.x > canvas.width-m-r) p.vx *= -WALL_DAMPING;
-                if(p.y < m+r || p.y > canvas.height-m-r) p.vy *= -WALL_DAMPING;
+            all.forEach(obj => {
+                obj.x += obj.vx / SUB_STEPS;
+                obj.y += obj.vy / SUB_STEPS;
+
+                // Wall bounce
+                const margin = 20 * SCALE;
+                if(obj.x < margin + obj.radius) { obj.x = margin + obj.radius; obj.vx *= -WALL_DAMPING; }
+                if(obj.x > canvas.width - margin - obj.radius) { obj.x = canvas.width - margin - obj.radius; obj.vx *= -WALL_DAMPING; }
+                if(obj.y < margin + obj.radius) { obj.y = margin + obj.radius; obj.vy *= -WALL_DAMPING; }
+                if(obj.y > canvas.height - margin - obj.radius) { obj.y = canvas.height - margin - obj.radius; obj.vy *= -WALL_DAMPING; }
             });
-            // Simple Collision
+
+            // Collisions
             for(let i=0; i<all.length; i++) {
                 for(let j=i+1; j<all.length; j++) {
-                    const d = Math.hypot(all[i].x-all[j].x, all[i].y-all[j].y);
-                    if(d < all[i].radius+all[j].radius) {
-                        let tempX = all[i].vx; let tempY = all[i].vy;
-                        all[i].vx = all[j].vx; all[i].vy = all[j].vy;
-                        all[j].vx = tempX; all[j].vy = tempY;
+                    const p1 = all[i], p2 = all[j];
+                    const dx = p2.x - p1.x, dy = p2.y - p1.y;
+                    const dist = Math.hypot(dx, dy);
+                    const minDist = p1.radius + p2.radius;
+
+                    if(dist < minDist) {
+                        const nx = dx/dist, ny = dy/dist;
+                        const overlap = minDist - dist;
+                        p1.x -= nx * overlap * 0.5; p1.y -= ny * overlap * 0.5;
+                        p2.x += nx * overlap * 0.5; p2.y += ny * overlap * 0.5;
+
+                        const rvx = p2.vx - p1.vx, rvy = p2.vy - p1.vy;
+                        const velNormal = rvx*nx + rvy*ny;
+                        if(velNormal > 0) continue;
+
+                        let impulse = -(1.8) * velNormal / (1/p1.mass + 1/p2.mass);
+                        p1.vx -= (impulse * nx) / p1.mass; p1.vy -= (impulse * ny) / p1.mass;
+                        p2.vx += (impulse * nx) / p2.mass; p2.vy += (impulse * ny) / p2.mass;
                     }
                 }
             }
         }
-        all.forEach(p => { p.vx *= FRICTION; p.vy *= FRICTION; if(Math.hypot(p.vx, p.vy) > 0.2) moving = true; else {p.vx=0; p.vy=0;} });
+
+        all.forEach(obj => {
+            obj.vx *= FRICTION; obj.vy *= FRICTION;
+            if(Math.abs(obj.vx) < 0.1) obj.vx = 0;
+            if(Math.abs(obj.vy) < 0.1) obj.vy = 0;
+            totalEnergy += Math.abs(obj.vx) + Math.abs(obj.vy);
+        });
+
         checkPockets();
-        if(!moving) handleTurnEnd();
+
+        if(totalEnergy === 0) {
+            gameState = 'AIMING';
+            handleTurnEnd();
+        }
     }
 
     function checkPockets() {
-        const pks = [[25,25],[575,25],[25,575],[575,575]];
+        const pockets = [[25,25], [575,25], [25,575], [575,575]];
         pieces.forEach((p, i) => {
-            pks.forEach(pk => {
+            pockets.forEach(pk => {
                 if(Math.hypot(p.x - pk[0]*SCALE, p.y - pk[1]*SCALE) < POCKET_RADIUS*SCALE) {
-                    scores[turn === 1 ? 'p1' : 'p2'] += (p.type === 'red' ? 50 : 10);
                     pieces.splice(i, 1);
                     pocketedThisTurn = true;
+                    if(turn === 'PLAYER') scores.p1 += 10; else scores.p2 += 10;
+                    showMsg("POCKET!", "#ffd700");
                 }
             });
         });
-        pks.forEach(pk => {
-            if(Math.hypot(striker.x - pk[0]*SCALE, striker.y - pk[1]*SCALE) < POCKET_RADIUS*SCALE) {
+        // Striker Foul
+        pockets.forEach(pk => {
+            if(striker.visible && Math.hypot(striker.x - pk[0]*SCALE, striker.y - pk[1]*SCALE) < POCKET_RADIUS*SCALE) {
                 striker.visible = false;
+                showMsg("FOUL!", "#ff4444");
             }
         });
     }
 
     function handleTurnEnd() {
-        if(!pocketedThisTurn) turn = (turn === 1) ? 2 : 1;
-        if(pieces.length === 0) endGame();
-        else resetStriker();
+        if(turn === 'PLAYER') {
+            // If player 1 made a shot, determine next turn
+            let nextTurn = pocketedThisTurn ? myId : "OPPONENT_ID_HERE"; 
+            // Note: You'll need the actual opponent's ID from Firebase
+            db.collection("active_matches").doc(matchId).update({ currentTurn: "MATCHMAKING_LOGIC_NEEDED" });
+        }
+        resetStriker();
     }
 
+    function resetStriker() {
+        striker.vx = 0; striker.vy = 0; striker.visible = true;
+        striker.x = canvas.width / 2;
+        striker.y = turn === 'PLAYER' ? canvas.height - 90*SCALE : 90*SCALE;
+    }
+
+    // --- Drawing ---
     function draw() {
         ctx.fillStyle = '#f3e5ab'; ctx.fillRect(0,0,canvas.width,canvas.height);
-        // Draw Lines (as requested)
+        
+        // Draw Board Lines (Simplified)
         ctx.strokeStyle = '#2a2a2a'; ctx.lineWidth = 2;
-        ctx.strokeRect(90*SCALE, 90*SCALE, 420*SCALE, 420*SCALE);
-        // Draw Pieces
-        pieces.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, 7); ctx.fillStyle = p.type; ctx.fill(); });
-        if(striker.visible) { ctx.beginPath(); ctx.arc(striker.x, striker.y, striker.radius, 0, 7); ctx.fillStyle = 'yellow'; ctx.fill(); }
-        // Aim line
-        if(striker.dragging && dragCurrent) {
-            ctx.beginPath(); ctx.moveTo(striker.x, striker.y); ctx.lineTo(striker.x+(dragStart.x-dragCurrent.x), striker.y+(dragStart.y-dragCurrent.y)); ctx.stroke();
+        ctx.strokeRect(60*SCALE, 60*SCALE, canvas.width-120*SCALE, canvas.height-120*SCALE);
+
+        pieces.forEach(p => drawPiece(p));
+        if(striker.visible) drawPiece(striker);
+
+        if(gameState === 'AIMING' && turn === 'PLAYER' && striker.dragging) {
+            ctx.beginPath(); ctx.moveTo(striker.x, striker.y);
+            ctx.lineTo(striker.x + (dragStart.x - dragCurrent.x)*2, striker.y + (dragStart.y - dragCurrent.y)*2);
+            ctx.strokeStyle = '#39ff14'; ctx.setLineDash([5,5]); ctx.stroke(); ctx.setLineDash([]);
         }
     }
 
+    function drawPiece(p) {
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+        ctx.fillStyle = p.isStriker ? '#ffeb3b' : (p.type === 'white' ? '#fff' : '#333');
+        ctx.fill(); ctx.stroke();
+    }
+
+    // --- UI & Controls ---
     function updateUI() {
-        document.getElementById('p1-badge').className = turn === 1 ? 'player-badge active' : 'player-badge';
-        document.getElementById('p2-badge').className = turn === 2 ? 'player-badge active' : 'player-badge';
+        document.getElementById('p1-badge').className = turn === 'PLAYER' ? 'player-badge active' : 'player-badge';
+        document.getElementById('p2-badge').className = turn === 'OPPONENT' ? 'player-badge active' : 'player-badge';
         document.getElementById('score-p1').innerText = scores.p1;
         document.getElementById('score-p2').innerText = scores.p2;
     }
 
-    function endGame() {
-        gameState = 'END';
-        const winTxt = scores.p1 > scores.p2 ? "Player 1 Wins!" : "Player 2 Wins!";
-        alert(winTxt);
-        location.reload();
+    function startGame() {
+        document.getElementById('menu-overlay').style.display = 'none';
+        gameState = 'AIMING';
+        resize();
+        // Create initial pieces
+        for(let i=0; i<9; i++) pieces.push({x: 300*SCALE + Math.random()*50, y: 300*SCALE + Math.random()*50, vx:0, vy:0, radius: PIECE_RADIUS*SCALE, mass:1, type: i%2==0?'white':'black'});
+        resetStriker();
+        requestAnimationFrame(function loop() { draw(); updatePhysics(); requestAnimationFrame(loop); });
     }
 
-    function gameLoop() { updatePhysics(); draw(); requestAnimationFrame(gameLoop); }
-    resize();
+    function resize() {
+        const size = document.getElementById('game-container').clientWidth;
+        canvas.width = canvas.height = size;
+        SCALE = size / 600;
+        striker.radius = STRIKER_RADIUS * SCALE;
+    }
+
+    canvas.addEventListener('touchstart', e => {
+        if(turn !== 'PLAYER' || gameState !== 'AIMING') return;
+        const pos = {x: e.touches[0].clientX - canvas.offsetLeft, y: e.touches[0].clientY - canvas.offsetTop};
+        if(Math.hypot(pos.x - striker.x, pos.y - striker.y) < 40*SCALE) {
+            striker.dragging = true; dragStart = pos; dragCurrent = pos;
+        }
+    });
+
+    canvas.addEventListener('touchmove', e => {
+        if(!striker.dragging) return;
+        dragCurrent = {x: e.touches[0].clientX - canvas.offsetLeft, y: e.touches[0].clientY - canvas.offsetTop};
+    });
+
+    canvas.addEventListener('touchend', () => {
+        if(!striker.dragging) return;
+        striker.dragging = false;
+        const dx = dragStart.x - dragCurrent.x, dy = dragStart.y - dragCurrent.y;
+        const power = Math.min(Math.hypot(dx, dy) * 0.2, MAX_POWER);
+        if(power > 5) {
+            const angle = Math.atan2(dy, dx);
+            db.collection("active_matches").doc(matchId).update({
+                lastShot: { startX: striker.x/SCALE, startY: striker.y/SCALE, power, angle, playedBy: myId }
+            });
+            executeShot(power, angle);
+        }
+    });
+
+    function showMsg(txt, col) {
+        msgEl.innerText = txt; msgEl.style.borderColor = col; msgEl.style.opacity = 1;
+        setTimeout(() => msgEl.style.opacity = 0, 1000);
+    }
+
+    initMultiplayer();
+    window.addEventListener('resize', resize);
 </script>
 </body>
 </html>
