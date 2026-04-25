@@ -6,31 +6,35 @@
     <title>VISSA PRO - Admin Panel</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #08051a; color: white; padding: 20px; }
-        .request-card { background: #1a1a4f; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid gold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; width: 45%; }
-        .approve-btn { background: #28a745; color: white; margin-right: 5%; }
+        .section-title { color: gold; border-bottom: 2px solid #333; padding-bottom: 10px; margin-top: 30px; }
+        .request-card { background: #1a1a4f; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .deposit-card { border-left: 5px solid #28a745; }
+        .withdraw-card { border-left: 5px solid #dc3545; }
+        .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; width: 48%; }
+        .approve-btn { background: #28a745; color: white; margin-right: 2%; }
         .reject-btn { background: #dc3545; color: white; }
-        .info-label { color: #aaa; font-size: 12px; margin-top: 5px; }
-        .info-value { font-size: 16px; margin-bottom: 5px; color: gold; font-weight: bold; }
-        #loading { text-align: center; margin-top: 50px; color: gold; }
+        .info-label { color: #aaa; font-size: 11px; margin-top: 5px; text-transform: uppercase; }
+        .info-value { font-size: 15px; margin-bottom: 5px; color: #fff; font-weight: bold; }
+        .bank-box { background: #000; padding: 10px; border-radius: 5px; font-size: 13px; color: #00d4ff; border: 1px dashed #444; }
+        #loading { text-align: center; margin-top: 50px; color: gold; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h2 style="color: gold;">Admin Panel - Deposit Requests</h2>
-    <p style="font-size: 12px; color: #888;">මෙහිදී ඔබට පරිශීලකයින්ගේ මුදල් ඉල්ලීම් Approve කළ හැක.</p>
-    <hr style="border: 0.5px solid #333;">
+    <h1 style="text-align: center; color: gold;">VISSA PRO Admin</h1>
 
-    <div id="requests-list">
-        <div id="loading">දත්ත පරීක්ෂා කරමින්...</div>
-    </div>
+    <h2 class="section-title">💰 Deposit Requests (මුදල් දැමීම්)</h2>
+    <div id="deposit-list"><p id="loading">පරීක්ෂා කරමින්...</p></div>
+
+    <h2 class="section-title">🏦 Withdrawal Requests (මුදල් ලබාගැනීම්)</h2>
+    <div id="withdraw-list"><p id="loading">පරීක්ෂා කරමින්...</p></div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // 1. ඔබේ පෞද්ගලික Firebase Config එක
+        // 1. Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
             authDomain: "vissaprocarrom.firebaseapp.com",
@@ -45,90 +49,96 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // 2. ඔබේ Admin UID එක (මෙය ඔබට පමණක් ඇතුළු වීමට ඉඩ ලබා දෙයි)
+        // 2. Security: Your Admin UID
         const MY_ADMIN_UID = "EM6KUIjRNzS8WFXxBrAEYIrZXzK2";
 
         auth.onAuthStateChanged((user) => {
             if (user) {
                 if (user.uid !== MY_ADMIN_UID) {
-                    alert("ඔබට මෙම පිටුවට ඇතුළු වීමට අවසර නැත!");
+                    alert("අවසර නැත! ඔබව Dashboard වෙත යොමු කෙරේ.");
                     window.location.href = "dashboard.html";
                 } else {
-                    console.log("Admin Authorized!");
-                    loadRequests();
+                    loadDeposits();
+                    loadWithdrawals();
                 }
             } else {
                 window.location.href = "index.html";
             }
         });
 
-        function loadRequests() {
-            // 'deposits' collection එකේ pendingRequests බලනවා
+        // --- Deposit Functions ---
+        function loadDeposits() {
             db.collection("deposits").where("status", "==", "pending")
             .onSnapshot((snapshot) => {
-                const listDiv = document.getElementById('requests-list');
-                listDiv.innerHTML = "";
-
-                if (snapshot.empty) {
-                    listDiv.innerHTML = "<p style='text-align:center; color:#666;'>අලුත් ඉල්ලීම් කිසිවක් නැත.</p>";
-                    return;
-                }
-
+                const listDiv = document.getElementById('deposit-list');
+                listDiv.innerHTML = snapshot.empty ? "<p>අලුත් Deposit නැත.</p>" : "";
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    const card = `
-                        <div class="request-card">
-                            <div class="info-label">පරිශීලකයා:</div>
-                            <div class="info-value">${data.userName || 'Gamer'}</div>
-                            
-                            <div class="info-label">මුදල:</div>
-                            <div class="info-value">LKR ${data.amount}</div>
-                            
-                            <div class="info-label">Ref Number:</div>
-                            <div class="info-value">${data.reference}</div>
-
+                    listDiv.innerHTML += `
+                        <div class="request-card deposit-card">
+                            <div class="info-label">User:</div><div class="info-value">${data.userName}</div>
+                            <div class="info-label">Amount:</div><div class="info-value" style="color:#28a745;">LKR ${data.amount}</div>
+                            <div class="info-label">Ref:</div><div class="info-value">${data.reference}</div>
                             <button class="btn approve-btn" onclick="approveDeposit('${doc.id}', '${data.uid}', ${data.amount})">APPROVE ✅</button>
-                            <button class="btn reject-btn" onclick="rejectDeposit('${doc.id}')">REJECT ❌</button>
-                        </div>
-                    `;
-                    listDiv.innerHTML += card;
+                            <button class="btn reject-btn" onclick="rejectRequest('deposits', '${doc.id}')">REJECT ❌</button>
+                        </div>`;
                 });
-            }, (error) => {
-                console.error("Error loading data: ", error);
-                document.getElementById('loading').innerText = "දත්ත ලබා ගැනීමට නොහැකි විය. (Rules පරීක්ෂා කරන්න)";
             });
         }
 
         async function approveDeposit(docId, userId, amount) {
-            if(confirm("LKR " + amount + " ක මුදල මෙම පරිශීලකයාට ලබා දෙනවාද?")) {
-                try {
-                    const userRef = db.collection("users").doc(userId);
-                    
-                    await db.runTransaction(async (transaction) => {
-                        const userDoc = await transaction.get(userRef);
-                        
-                        let currentBalance = 0;
-                        if (userDoc.exists && userDoc.data().balance) {
-                            currentBalance = parseFloat(userDoc.data().balance);
-                        }
-
-                        const newBalance = currentBalance + parseFloat(amount);
-
-                        transaction.update(userRef, { balance: newBalance });
-                        transaction.update(db.collection("deposits").doc(docId), { status: "completed" });
-                    });
-
-                    alert("මුදල් සාර්ථකව එකතු කළා! ✅");
-                } catch (e) {
-                    alert("Error: " + e.message);
-                }
+            if(confirm("LKR " + amount + " ක මුදල මොහුගේ ගිණුමට එකතු කරන්නද?")) {
+                const userRef = db.collection("users").doc(userId);
+                await db.runTransaction(async (t) => {
+                    const userDoc = await t.get(userRef);
+                    let newBal = (userDoc.data().balance || 0) + parseFloat(amount);
+                    t.update(userRef, { balance: newBal });
+                    t.update(db.collection("deposits").doc(docId), { status: "completed" });
+                });
+                alert("සාර්ථකයි!");
             }
         }
 
-        function rejectDeposit(docId) {
+        // --- Withdrawal Functions ---
+        function loadWithdrawals() {
+            db.collection("withdrawals").where("status", "==", "pending")
+            .onSnapshot((snapshot) => {
+                const listDiv = document.getElementById('withdraw-list');
+                listDiv.innerHTML = snapshot.empty ? "<p>අලුත් Withdrawals නැත.</p>" : "";
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    listDiv.innerHTML += `
+                        <div class="request-card withdraw-card">
+                            <div class="info-label">User:</div><div class="info-value">${data.userName}</div>
+                            <div class="info-label">Amount:</div><div class="info-value" style="color:#dc3545;">LKR ${data.amount}</div>
+                            <div class="info-label">Bank Details:</div>
+                            <div class="bank-box">${data.details}</div>
+                            <button class="btn approve-btn" onclick="approveWithdraw('${doc.id}', '${data.uid}', ${data.amount})">PAID (Done) ✅</button>
+                            <button class="btn reject-btn" onclick="rejectRequest('withdrawals', '${doc.id}')">REJECT ❌</button>
+                        </div>`;
+                });
+            });
+        }
+
+        async function approveWithdraw(docId, userId, amount) {
+            if(confirm("ඔබ සල්ලි යැවුවාද? මෙයින් පසු මොහුගේ Balance එකෙන් LKR " + amount + " කැපෙනු ඇත.")) {
+                const userRef = db.collection("users").doc(userId);
+                try {
+                    await db.runTransaction(async (t) => {
+                        const userDoc = await t.get(userRef);
+                        let currentBal = userDoc.data().balance || 0;
+                        if(currentBal < amount) throw "මොහු සතුව ප්‍රමාණවත් මුදල් නැත!";
+                        t.update(userRef, { balance: currentBal - amount });
+                        t.update(db.collection("withdrawals").doc(docId), { status: "completed" });
+                    });
+                    alert("සාර්ථකයි!");
+                } catch(e) { alert(e); }
+            }
+        }
+
+        function rejectRequest(collection, docId) {
             if(confirm("මෙම ඉල්ලීම ප්‍රතික්ෂේප කරන්නද?")) {
-                db.collection("deposits").doc(docId).update({ status: "rejected" })
-                .then(() => alert("ඉල්ලීම ප්‍රතික්ෂේප කළා."));
+                db.collection(collection).doc(docId).update({ status: "rejected" });
             }
         }
     </script>
