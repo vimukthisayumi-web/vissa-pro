@@ -3,34 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vissa-Pro Elite Battle</title>
+    <title>Vissa-Pro Firebase Battle</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
         :root { --primary: #ff4757; --secondary: #2ed573; --bg: #0f0f0f; --card: #1e1e1e; }
-        body { font-family: sans-serif; background-color: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         .match-header { background: var(--card); padding: 15px; display: flex; justify-content: space-around; align-items: center; border-bottom: 3px solid var(--primary); }
-        .p-label { font-size: 10px; color: #888; text-transform: uppercase; }
         .p-balance { font-size: 20px; font-weight: bold; }
-        .pot-box { border: 1px solid var(--primary); padding: 5px 15px; border-radius: 20px; color: var(--secondary); font-weight: bold; }
         #timer-wrap { width: 100%; height: 6px; background: #222; }
-        #timer-fill { width: 100%; height: 100%; background: var(--primary); transition: width 0.05s linear; }
+        #timer-fill { width: 100%; height: 100%; background: var(--primary); }
         .game-zone { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        #display-word { font-size: 65px; font-weight: 900; margin-bottom: 30px; text-transform: uppercase; }
+        #display-word { font-size: 60px; font-weight: 900; text-transform: uppercase; margin-bottom: 30px; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; max-width: 400px; }
         .color-btn { height: 80px; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 0 #000; }
         .footer { background: var(--card); padding: 15px; display: flex; gap: 10px; }
-        .action-btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; }
+        .action-btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
     <div class="match-header">
         <div style="text-align:center">
-            <div class="p-label">ඔබ</div>
+            <div style="font-size:10px; color:#888;">ඔබ</div>
             <div id="my-bal-ui" class="p-balance">Rs. 100</div>
         </div>
-        <div class="pot-box">POT: <span id="pot-ui">Rs. 0</span></div>
+        <div style="color:var(--secondary); font-weight:bold; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 20px;">
+            POT: <span id="pot-ui">Rs. 0</span>
+        </div>
         <div style="text-align:center">
-            <div class="p-label">ප්‍රතිවාදියා</div>
+            <div style="font-size:10px; color:#888;">ප්‍රතිවාදියා</div>
             <div id="opp-bal-ui" class="p-balance">Rs. 100</div>
         </div>
     </div>
@@ -53,79 +56,70 @@
     </footer>
 
     <script>
-        const colors = ["red", "blue", "green", "yellow"];
-        let targetColor = "";
-        let isGameActive = false;
+        // 1. Firebase Initialization
+        const firebaseConfig = {
+            apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
+            authDomain: "vissaprocarrom.firebaseapp.com",
+            projectId: "vissaprocarrom",
+            storageBucket: "vissaprocarrom.firebasestorage.app",
+            messagingSenderId: "722305696915",
+            appId: "1:722305696915:web:056e8be25a245ac29c7966",
+            measurementId: "G-KCKJLGX5J5"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 2. Room & Player Logic
+        // පරීක්ෂා කිරීම සඳහා මෙහි roomId සහ role එක අතින් වෙනස් කරන්න (p1 හෝ p2)
+        let roomId = "battle_room_1"; 
+        let myRole = "p1"; 
+        let oppRole = (myRole === "p1") ? "p2" : "p1";
+        
         let myBal = 100;
-        let oppBal = 100;
+        let isGameActive = false;
+        let targetColor = "";
         const ROUND_FEE = 15;
-        const WIN_PER_CLICK = 10;
         const MAX_LIMIT = 180;
 
-        // --- Firebase වලට සම්බන්ධ කළ යුතු කොටස ---
-        let iAmReady = false;
-        let opponentReady = false; // මෙය Firebase එකෙන් listen කරන්න ඕනේ
-
+        // 3. Start Bet Function
         function startBet() {
-            if(isGameActive || iAmReady) return;
             if(myBal < ROUND_FEE) { alert("සල්ලි මදි!"); return; }
-
-            iAmReady = true;
-            document.getElementById('btn-bet').innerText = "WAITING FOR OPPONENT...";
+            
+            // Firebase එකේ ලෑස්තියි කියලා සලකුණු කිරීම
+            db.ref('rooms/' + roomId + '/' + myRole + '_ready').set(true);
+            
+            document.getElementById('btn-bet').innerText = "WAITING...";
+            document.getElementById('btn-bet').disabled = true;
             document.getElementById('btn-bet').style.opacity = "0.5";
 
-            // මෙතැනදී Firebase එකේ 'player_ready' එක true කරන්න
-            // database.ref('rooms/room1/p1_ready').set(true);
-
-            checkBothReady();
-        }
-
-        // දෙන්නම ලෑස්තිද කියලා පරීක්ෂා කරන function එක
-        function checkBothReady() {
-            // දැනට පරීක්ෂා කිරීම සඳහා තත්පර 3කට පසු ප්‍රතිවාදියා ආවා යැයි සලකමු
-            // සැබෑ ඇප් එකේදී Firebase Listener එකක් මගින් මෙය සිදු වේ
-            setTimeout(() => {
-                opponentReady = true; // ප්‍රතිවාදියා ලෑස්ති වුණා කියලා හිතමු
-                
-                if(iAmReady && opponentReady) {
+            // දෙන්නම ලෑස්තිද කියලා බලන Listener එක
+            db.ref('rooms/' + roomId).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data && data.p1_ready && data.p2_ready && !isGameActive) {
                     beginMatch();
                 }
-            }, 3000); 
+            });
         }
 
         function beginMatch() {
-            myBal -= ROUND_FEE;
-            document.getElementById('pot-ui').innerText = "Rs. " + (ROUND_FEE * 2);
-            updateUI();
             isGameActive = true;
-            document.getElementById('btn-bet').innerText = "MATCH LIVE!";
+            myBal -= ROUND_FEE;
+            document.getElementById('pot-ui').innerText = "Rs. 30";
+            document.getElementById('btn-bet').innerText = "LIVE!";
+            updateUI();
             nextRound();
         }
 
-        function handleInput(choice) {
-            if(!isGameActive) return;
-            if(choice === targetColor) {
-                myBal += WIN_PER_CLICK;
-                oppBal -= WIN_PER_CLICK;
-                updateUI();
-                if(myBal >= MAX_LIMIT) {
-                    alert("උපරිම සීමාවට පැමිණියා!");
-                    window.location.href = "dashboard.html";
-                }
-                nextRound();
-            } else {
-                endGame("වැරදියි! ඔබ පැරදුණා. (රු. 15 පද්ධතියට)");
-            }
-        }
-
         function nextRound() {
+            if(!isGameActive) return;
+            const colors = ["red", "blue", "green", "yellow"];
             let txt = colors[Math.floor(Math.random() * colors.length)];
             targetColor = colors[Math.floor(Math.random() * colors.length)];
+            
             let el = document.getElementById('display-word');
             el.innerText = txt.toUpperCase();
             el.style.color = targetColor;
             
-            // Timer එක පටන් ගැනීම
             startTimer();
         }
 
@@ -137,20 +131,36 @@
                 let diff = Date.now() - start;
                 let prog = Math.max(0, 100 - (diff / 1500 * 100));
                 document.getElementById('timer-fill').style.width = prog + "%";
-                if(diff >= 1500) endGame("කාලය අවසන්!");
+                if(diff >= 1500) endGame("TIME OUT! (රු. 15 පද්ධතියට)");
             }, 20);
+        }
+
+        function handleInput(choice) {
+            if(!isGameActive) return;
+            if(choice === targetColor) {
+                myBal += 10;
+                updateUI();
+                if(myBal >= MAX_LIMIT) {
+                    alert("උපරිම සීමාව (180) සම්පූර්ණයි!");
+                    window.location.href = "dashboard.html";
+                }
+                nextRound();
+            } else {
+                endGame("වැරදියි! (රු. 15 පද්ධතියට)");
+            }
         }
 
         function endGame(msg) {
             isGameActive = false;
             clearInterval(timer);
+            // Firebase එක Reset කිරීම
+            db.ref('rooms/' + roomId).update({p1_ready: false, p2_ready: false});
             alert(msg);
             location.reload();
         }
 
         function updateUI() {
             document.getElementById('my-bal-ui').innerText = "Rs. " + myBal;
-            document.getElementById('opp-bal-ui').innerText = "Rs. " + oppBal;
         }
 
         function cashOut() {
