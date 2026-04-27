@@ -5,67 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vissa-Pro Elite Battle</title>
     <style>
-        :root {
-            --primary: #ff4757;
-            --secondary: #2ed573;
-            --bg: #0f0f0f;
-            --card: #1e1e1e;
-        }
-
-        body { 
-            font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); 
-            color: white; margin: 0; display: flex; flex-direction: column; height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Header Info */
-        .match-header {
-            background: var(--card); padding: 15px; display: flex;
-            justify-content: space-around; align-items: center; border-bottom: 3px solid var(--primary);
-        }
-
-        .player-info { text-align: center; width: 30%; }
-        .p-label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 4px; }
-        .p-balance { font-size: 20px; font-weight: bold; color: #fff; }
-
-        .pot-box {
-            background: #2a2a2a; padding: 8px 15px; border-radius: 50px;
-            border: 1px solid var(--primary); text-align: center;
-        }
-        .pot-label { font-size: 9px; color: var(--primary); font-weight: bold; }
-        .pot-val { font-size: 16px; font-weight: bold; color: var(--secondary); }
-
-        /* Progress Bar */
+        :root { --primary: #ff4757; --secondary: #2ed573; --bg: #0f0f0f; --card: #1e1e1e; }
+        body { font-family: sans-serif; background-color: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        .match-header { background: var(--card); padding: 15px; display: flex; justify-content: space-around; align-items: center; border-bottom: 3px solid var(--primary); }
+        .p-label { font-size: 10px; color: #888; text-transform: uppercase; }
+        .p-balance { font-size: 20px; font-weight: bold; }
+        
         #timer-wrap { width: 100%; height: 6px; background: #222; }
         #timer-fill { width: 100%; height: 100%; background: var(--primary); transition: width 0.05s linear; }
-
-        /* Game Core */
+        
         .game-zone { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        #display-word { font-size: 75px; font-weight: 900; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px; }
-
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 92%; max-width: 400px; }
-        .color-btn { height: 80px; border: none; border-radius: 15px; cursor: pointer; transition: 0.1s; box-shadow: 0 5px 0 #000; }
-        .color-btn:active { transform: translateY(4px); box-shadow: none; }
-
-        /* Footer Controls */
-        .footer { background: var(--card); padding: 15px; display: flex; gap: 12px; width: 100%; box-sizing: border-box; }
-        .action-btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; font-size: 15px; cursor: pointer; color: white; text-transform: uppercase; }
-        #btn-bet { background: var(--primary); }
-        #btn-cashout { background: var(--secondary); }
+        #display-word { font-size: 60px; font-weight: 900; margin-bottom: 30px; text-transform: uppercase; }
+        
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; max-width: 400px; }
+        .color-btn { height: 80px; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 0 #000; }
+        
+        .footer { background: var(--card); padding: 15px; display: flex; gap: 10px; }
+        .action-btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; }
     </style>
 </head>
 <body>
 
     <div class="match-header">
-        <div class="player-info">
-            <div class="p-label">ඔබ (Balance)</div>
+        <div style="text-align:center">
+            <div class="p-label">ඔබ</div>
             <div id="my-bal-ui" class="p-balance">Rs. 100</div>
         </div>
-        <div class="pot-box">
-            <div class="pot-label">ROUND STAKE</div>
-            <div id="pot-ui" class="pot-val">Rs. 0</div>
-        </div>
-        <div class="player-info">
+        <div style="text-align:center; color:var(--secondary)">POT: <span id="pot-ui">Rs. 0</span></div>
+        <div style="text-align:center">
             <div class="p-label">ප්‍රතිවාදියා</div>
             <div id="opp-bal-ui" class="p-balance">Rs. 100</div>
         </div>
@@ -74,7 +42,7 @@
     <div id="timer-wrap"><div id="timer-fill"></div></div>
 
     <main class="game-zone">
-        <div id="display-word">READY</div>
+        <div id="display-word">WAITING</div>
         <div class="btn-grid">
             <button class="color-btn" style="background:#ff4d4d" onclick="handleInput('red')"></button>
             <button class="color-btn" style="background:#1e90ff" onclick="handleInput('blue')"></button>
@@ -84,114 +52,69 @@
     </main>
 
     <footer class="footer">
-        <button id="btn-bet" class="action-btn" onclick="startBet()">START BET (Rs. 15)</button>
-        <button id="btn-cashout" class="action-btn" onclick="cashOut()">CASH OUT</button>
+        <button id="btn-bet" class="action-btn" style="background:var(--primary)" onclick="startBet()">START BET (Rs. 15)</button>
+        <button id="btn-cashout" class="action-btn" style="background:var(--secondary)" onclick="cashOut()">CASH OUT</button>
     </footer>
 
     <script>
         const colors = ["red", "blue", "green", "yellow"];
         let targetColor = "";
         let isGameActive = false;
-        let timer;
-        const TIME_LIMIT = 1500; // 1.5 Seconds
-
-        // Betting Logic Values
-        let myBal = 100; 
+        let myBal = 100;
         let oppBal = 100;
         const ROUND_FEE = 15;
         const WIN_PER_CLICK = 10;
         const MAX_LIMIT = 180;
+
+        function startBet() {
+            if(isGameActive) return;
+            // දෙන්නාම Bet කරනකන් ඉන්න ඕනේ (මේක Firebase හරහා අනිවාර්ය කරන්න)
+            document.getElementById('btn-bet').innerText = "WAITING FOR OPPONENT...";
+            myBal -= ROUND_FEE;
+            updateUI();
+            
+            // සැබෑ ක්‍රීඩාවකදී මෙතැනදී Firebase 'ready' status එක true කරන්න
+            setTimeout(() => {
+                isGameActive = true;
+                document.getElementById('pot-ui').innerText = "Rs. " + (ROUND_FEE * 2);
+                nextRound();
+            }, 2000); // 2 තත්පරයකින් දෙන්නම ලෑස්ති වුණා කියලා හිතන්න
+        }
+
+        function handleInput(choice) {
+            if(!isGameActive) return;
+            if(choice === targetColor) {
+                myBal += WIN_PER_CLICK;
+                oppBal -= WIN_PER_CLICK;
+                updateUI();
+                if(myBal >= MAX_LIMIT) window.location.href = "dashboard.html";
+                nextRound();
+            } else {
+                endGame("වැරදියි! ඔබ පැරදුණා.");
+            }
+        }
+
+        function nextRound() {
+            let txt = colors[Math.floor(Math.random() * colors.length)];
+            targetColor = colors[Math.floor(Math.random() * colors.length)];
+            document.getElementById('display-word').innerText = txt.toUpperCase();
+            document.getElementById('display-word').style.color = targetColor;
+        }
+
+        function endGame(msg) {
+            isGameActive = false;
+            alert(msg);
+            location.reload();
+        }
 
         function updateUI() {
             document.getElementById('my-bal-ui').innerText = "Rs. " + myBal;
             document.getElementById('opp-bal-ui').innerText = "Rs. " + oppBal;
         }
 
-        function startBet() {
-            if(isGameActive) return;
-            if(myBal < ROUND_FEE) { alert("ඔබේ ගිණුමේ මුදල් මදි!"); return; }
-
-            // වටයකට රු. 15 කැපේ
-            myBal -= ROUND_FEE;
-            document.getElementById('pot-ui').innerText = "Rs. " + ROUND_FEE;
-            updateUI();
-
-            isGameActive = true;
-            document.getElementById('btn-bet').innerText = "LIVE...";
-            document.getElementById('btn-bet').style.opacity = "0.6";
-            nextRound();
-        }
-
-        function nextRound() {
-            if(!isGameActive) return;
-            let randomTxt = colors[Math.floor(Math.random() * colors.length)];
-            targetColor = colors[Math.floor(Math.random() * colors.length)];
-            
-            let el = document.getElementById('display-word');
-            el.innerText = randomTxt.toUpperCase();
-            el.style.color = targetColor;
-            
-            runTimer();
-        }
-
-        function runTimer() {
-            clearInterval(timer);
-            let start = Date.now();
-            timer = setInterval(() => {
-                let diff = Date.now() - start;
-                let prog = Math.max(0, 100 - (diff / TIME_LIMIT * 100));
-                document.getElementById('timer-fill').style.width = prog + "%";
-                
-                if(diff >= TIME_LIMIT) {
-                    endGame("TIME OUT! කාලය අවසන්. (රු. 15 පද්ධතියට හිමි විය)");
-                }
-            }, 20);
-        }
-
-        function handleInput(choice) {
-            if(!isGameActive) return;
-
-            if(choice === targetColor) {
-                // නිවැරදි නම් ප්‍රතිවාදියාගෙන් රු. 10ක් ඔබට ලැබේ
-                myBal += WIN_PER_CLICK;
-                oppBal -= WIN_PER_CLICK;
-                updateUI();
-
-                // රු. 180 සීමාව පරීක්ෂා කිරීම
-                if(myBal >= MAX_LIMIT) { 
-                    isGameActive = false;
-                    clearInterval(timer);
-                    alert("සුභ පැතුම්! ඔබ රු. 180 උපරිම සීමාව කරා ළඟා විය. දැන් ඔබව Dashboard වෙත යොමු කෙරේ.");
-                    window.location.href = "dashboard.html"; 
-                    return;
-                }
-                nextRound();
-            } else {
-                endGame("WRONG COLOR! වැරදි වර්ණයක්. (රු. 15 පද්ධතියට හිමි විය)");
-            }
-        }
-
-        function endGame(msg) {
-            isGameActive = false;
-            clearInterval(timer);
-            alert(msg);
-            resetGameUI();
-        }
-
         function cashOut() {
-            isGameActive = false;
-            clearInterval(timer);
-            alert("මුදල් ලබා ගැනීම සාර්ථකයි! දැන් ඔබව Dashboard වෙත යොමු කෙරේ.");
+            alert("Cash out සාර්ථකයි!");
             window.location.href = "dashboard.html";
-        }
-
-        function resetGameUI() {
-            document.getElementById('display-word').innerText = "READY";
-            document.getElementById('display-word').style.color = "white";
-            document.getElementById('btn-bet').innerText = "START BET (Rs. 15)";
-            document.getElementById('btn-bet').style.opacity = "1";
-            document.getElementById('pot-ui').innerText = "Rs. 0";
-            document.getElementById('timer-fill').style.width = "100%";
         }
     </script>
 </body>
