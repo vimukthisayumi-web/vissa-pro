@@ -12,70 +12,54 @@
             margin: 0; padding: 20px; padding-bottom: 100px;
             text-align: center; 
         }
-        .profile-container { position: relative; width: 100px; height: 100px; margin: 20px auto; }
         .profile-img { 
             width: 100px; height: 100px; 
             border-radius: 50%; border: 4px solid gold; 
             box-shadow: 0 0 15px gold; object-fit: cover;
+            margin-bottom: 10px;
         }
-        h3 { margin-top: 10px; margin-bottom: 5px; }
-        
-        /* UID Styling */
         #uid-display {
             color: gold; font-size: 11px; cursor: pointer;
             background: rgba(255, 215, 0, 0.1);
-            padding: 4px 10px; border-radius: 5px;
+            padding: 6px 12px; border-radius: 8px;
             border: 1px dashed gold; display: inline-block; margin-top: 5px;
         }
-
-        .info-container { margin-top: 30px; text-align: left; }
         .info-box { 
             background: rgba(255,255,255,0.05); padding: 15px; 
             border-radius: 15px; margin-bottom: 12px; border-left: 4px solid #0cf;
+            text-align: left;
         }
         .label { font-size: 11px; color: #aaa; text-transform: uppercase; }
-        .value { font-size: 15px; font-weight: bold; margin-top: 3px; word-wrap: break-word; }
-        
-        /* Username Section */
-        .save-btn { background: gold; color: black; border: none; padding: 8px 12px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 5px; width: 100%; }
-        input { background: rgba(255,255,255,0.1); color: white; border: 1px solid #555; padding: 10px; border-radius: 10px; width: 90%; margin-top: 5px; }
-        
+        .value { font-size: 15px; font-weight: bold; margin-top: 3px; }
+        input { background: rgba(255,255,255,0.1); color: white; border: 1px solid #555; padding: 12px; border-radius: 10px; width: 90%; margin-top: 8px; }
+        .save-btn { background: gold; color: black; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
         .logout-btn { 
             background: linear-gradient(45deg, #ff4444, #8b0000); 
             color: white; border: none; padding: 15px; width: 100%; 
-            border-radius: 15px; margin-top: 30px; font-weight: bold;
+            border-radius: 15px; margin-top: 20px; font-weight: bold;
         }
         .bottom-nav { 
             position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; 
             background: #100a2e; display: flex; justify-content: space-around; 
-            align-items: center; border-top: 1px solid #333; z-index: 1000;
+            align-items: center; border-top: 1px solid #333;
         }
-        .nav-item { text-align: center; color: #888; font-size: 10px; flex: 1; text-decoration: none; }
+        .nav-item { text-align: center; color: #888; font-size: 10px; text-decoration: none; }
         .nav-item.active { color: gold; }
-        .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
-        button.verify-btn { background: #ffcc00; color: black; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-top: 5px; }
     </style>
 </head>
 <body>
 
     <h2>මගේ පැතිකඩ</h2>
-    
-    <div class="profile-container">
-        <img id="user-photo" class="profile-img" src="https://via.placeholder.com/100" alt="Profile">
-    </div>
-
-    <h3 id="user-name-display">Loading...</h3>
-    <p style="color: #0cf; font-size: 13px; margin: 0;">VISSA PRO Member</p>
-    
+    <img id="user-photo" class="profile-img" src="https://via.placeholder.com/100" alt="Profile">
+    <h3 id="user-name-display" style="margin: 5px 0;">Loading...</h3>
     <div id="uid-display" onclick="copyUID()">UID: Loading...</div>
 
-    <div class="info-container">
+    <div style="margin-top: 25px;">
         <div class="info-box">
             <div class="label">පරිශීලක නාමය (Username)</div>
             <div id="username-section">
                 <input type="text" id="username-input" placeholder="ඔබේ නම මෙතැන ලියන්න">
                 <button class="save-btn" onclick="saveUsername()">නම සුරකින්න</button>
-                <small style="color: #ff4444; font-size: 9px;">*ඔබට නම වෙනස් කළ හැක්කේ එක් වරක් පමණි.</small>
             </div>
         </div>
 
@@ -83,29 +67,14 @@
             <div class="label">ඊමේල් ලිපිනය</div>
             <div id="user-email" class="value">Loading...</div>
         </div>
-
-        <div class="info-box">
-            <div class="label">දුරකථන අංකය</div>
-            <div id="phone-container">
-                <input type="text" id="phone-number" placeholder="+947XXXXXXXX" style="width: 60%;">
-                <button class="verify-btn" onclick="sendOTP()">Code එවන්න</button>
-            </div>
-            <div id="otp-section" style="display: none; margin-top: 10px;">
-                <input type="text" id="verification-code" placeholder="OTP Code එක" style="width: 60%;">
-                <button class="verify-btn" style="background: #00ff00;" onclick="verifyOTP()">Verify</button>
-            </div>
-        </div>
     </div>
 
-    <div id="recaptcha-container"></div>
     <button class="logout-btn" onclick="logoutUser()">LOGOUT</button>
 
     <div class="bottom-nav">
-        <a href="dashboard.html" class="nav-item"><span class="nav-icon">🏠</span>මුල් පිටුව</a>
-        <a href="wallet.html" class="nav-item"><span class="nav-icon">👜</span>පසුම්බිය</a>
-        <a href="events.html" class="nav-item"><span class="nav-icon">🏆</span>සිදුවීම්</a>
-        <a href="notifications.html" class="nav-item"><span class="nav-icon">🔔</span>දැනුම්දීම්</a>
-        <a href="profile.html" class="nav-item active"><span class="nav-icon">👤</span>පැතිකඩ</a>
+        <a href="dashboard.html" class="nav-item">🏠<br>Home</a>
+        <a href="wallet.html" class="nav-item">👜<br>Wallet</a>
+        <a href="profile.html" class="nav-item active">👤<br>Profile</a>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -119,14 +88,10 @@
             projectId: "vissaprocarrom",
             storageBucket: "vissaprocarrom.firebasestorage.app",
             messagingSenderId: "722305696915",
-            appId: "1:722305696915:web:056e8be25a245ac29c7966",
-            measurementId: "G-KCKJLGX5J5"
+            appId: "1:722305696915:web:056e8be25a245ac29c7966"
         };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-
+        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
@@ -135,88 +100,44 @@
                 document.getElementById('user-email').innerText = user.email;
                 document.getElementById('uid-display').innerText = "UID: " + user.uid;
                 
-                if (user.photoURL) {
-                    document.getElementById('user-photo').src = user.photoURL;
-                }
-
-                // Firestore එකෙන් Username එක චෙක් කරන්න
-                db.collection("users").doc(user.uid).get().then((doc) => {
+                db.collection("users").doc(user.uid).onSnapshot((doc) => {
                     if (doc.exists && doc.data().username) {
-                        const savedName = doc.data().username;
-                        document.getElementById('user-name-display').innerText = savedName;
-                        // නම තිබේ නම් input එක අයින් කර නම පෙන්වන්න
-                        document.getElementById('username-section').innerHTML = `<div class="value">${savedName} ✅</div>`;
-                    } else {
-                        document.getElementById('user-name-display').innerText = "පරිශීලකයා";
+                        const name = doc.data().username;
+                        document.getElementById('user-name-display').innerText = name;
+                        // Player_ නම නෙවෙයි නම්, input එක අයින් කර නම පෙන්වයි
+                        if(!name.startsWith("Player_")) {
+                            document.getElementById('username-section').innerHTML = `<div class="value">${name} ✅</div>`;
+                        }
                     }
                 });
-
-                if (user.phoneNumber) {
-                    document.getElementById('phone-container').innerHTML = '<div class="value">' + user.phoneNumber + '</div>';
-                }
-            } else {
-                window.location.href = "index.html";
-            }
+            } else { window.location.href = "index.html"; }
         });
 
-        // UID එක Copy කිරීම
-        function copyUID() {
-            const user = auth.currentUser;
-            if (user) {
-                navigator.clipboard.writeText(user.uid).then(() => {
-                    alert("User ID එක පිටපත් කරගත්තා! ✅");
-                });
-            }
-        }
-
-        // Username එක Save කිරීම (එක් වරක් පමණි)
         function saveUsername() {
-            const newName = document.getElementById('username-input').value;
-            const user = auth.currentUser;
+            const name = document.getElementById('username-input').value.trim();
+            if (name.length < 3) return alert("නම කෙටි වැඩියි!");
+            if (name.startsWith("Player_")) return alert("වෙනත් නමක් තෝරන්න!");
 
-            if (!newName || newName.length < 3) {
-                alert("කරුණාකර අවම අකුරු 3ක නමක් ඇතුළත් කරන්න.");
-                return;
-            }
-
-            db.collection("users").doc(user.uid).set({
-                username: newName,
-                email: user.email,
-                uid: user.uid
-            }, { merge: true }).then(() => {
-                alert("නම සාර්ථකව සුරකින ලදී!");
-                location.reload();
-            }).catch((error) => {
-                alert("දෝෂයක්: " + error.message);
-            });
+            db.collection("users").doc(auth.currentUser.uid).update({
+                username: name
+            }).then(() => alert("සාර්ථකව සුරැකුණා!"))
+              .catch(e => {
+                  // Document එක නැතිනම් පමණක් set භාවිතා කරයි
+                  db.collection("users").doc(auth.currentUser.uid).set({
+                      username: name,
+                      uid: auth.currentUser.uid,
+                      balance: 0
+                  }, { merge: true });
+              });
         }
 
-        // Phone Auth කොටස
-        var confirmationResult;
-        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { 'size': 'invisible' });
-
-        function sendOTP() {
-            const phoneNumber = document.getElementById('phone-number').value;
-            if (!phoneNumber.startsWith('+')) { alert("කරුණාකර රටේ කේතය සහිතව අංකය ඇතුළත් කරන්න (උදා: +947...)"); return; }
-            
-            auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
-                .then((result) => {
-                    confirmationResult = result;
-                    alert("Code එක එවුවා!");
-                    document.getElementById('otp-section').style.display = 'block';
-                }).catch((error) => { alert("දෝෂයක්: " + error.message); });
-        }
-
-        function verifyOTP() {
-            const code = document.getElementById('verification-code').value;
-            confirmationResult.confirm(code).then(() => {
-                alert("සාර්ථකව Verify වුණා!");
-                location.reload();
-            }).catch(() => { alert("වැරදි Code එකක්!"); });
+        function copyUID() {
+            navigator.clipboard.writeText(auth.currentUser.uid);
+            alert("UID Copied!");
         }
 
         function logoutUser() {
-            auth.signOut().then(() => { window.location.href = "index.html"; });
+            auth.signOut().then(() => window.location.href = "index.html");
         }
     </script>
 </body>
