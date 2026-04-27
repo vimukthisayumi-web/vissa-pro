@@ -7,20 +7,16 @@
     <style>
         :root { --primary: #ff4757; --secondary: #2ed573; --bg: #0f0f0f; --card: #1e1e1e; }
         body { font-family: sans-serif; background-color: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
         .match-header { background: var(--card); padding: 15px; display: flex; justify-content: space-around; align-items: center; border-bottom: 3px solid var(--primary); }
         .p-label { font-size: 10px; color: #888; text-transform: uppercase; }
         .p-balance { font-size: 20px; font-weight: bold; }
-        
+        .pot-box { border: 1px solid var(--primary); padding: 5px 15px; border-radius: 20px; color: var(--secondary); font-weight: bold; }
         #timer-wrap { width: 100%; height: 6px; background: #222; }
         #timer-fill { width: 100%; height: 100%; background: var(--primary); transition: width 0.05s linear; }
-        
         .game-zone { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        #display-word { font-size: 60px; font-weight: 900; margin-bottom: 30px; text-transform: uppercase; }
-        
+        #display-word { font-size: 65px; font-weight: 900; margin-bottom: 30px; text-transform: uppercase; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; max-width: 400px; }
         .color-btn { height: 80px; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 0 #000; }
-        
         .footer { background: var(--card); padding: 15px; display: flex; gap: 10px; }
         .action-btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; }
     </style>
@@ -32,7 +28,7 @@
             <div class="p-label">ඔබ</div>
             <div id="my-bal-ui" class="p-balance">Rs. 100</div>
         </div>
-        <div style="text-align:center; color:var(--secondary)">POT: <span id="pot-ui">Rs. 0</span></div>
+        <div class="pot-box">POT: <span id="pot-ui">Rs. 0</span></div>
         <div style="text-align:center">
             <div class="p-label">ප්‍රතිවාදියා</div>
             <div id="opp-bal-ui" class="p-balance">Rs. 100</div>
@@ -42,7 +38,7 @@
     <div id="timer-wrap"><div id="timer-fill"></div></div>
 
     <main class="game-zone">
-        <div id="display-word">WAITING</div>
+        <div id="display-word">READY</div>
         <div class="btn-grid">
             <button class="color-btn" style="background:#ff4d4d" onclick="handleInput('red')"></button>
             <button class="color-btn" style="background:#1e90ff" onclick="handleInput('blue')"></button>
@@ -66,19 +62,44 @@
         const WIN_PER_CLICK = 10;
         const MAX_LIMIT = 180;
 
+        // --- Firebase වලට සම්බන්ධ කළ යුතු කොටස ---
+        let iAmReady = false;
+        let opponentReady = false; // මෙය Firebase එකෙන් listen කරන්න ඕනේ
+
         function startBet() {
-            if(isGameActive) return;
-            // දෙන්නාම Bet කරනකන් ඉන්න ඕනේ (මේක Firebase හරහා අනිවාර්ය කරන්න)
+            if(isGameActive || iAmReady) return;
+            if(myBal < ROUND_FEE) { alert("සල්ලි මදි!"); return; }
+
+            iAmReady = true;
             document.getElementById('btn-bet').innerText = "WAITING FOR OPPONENT...";
-            myBal -= ROUND_FEE;
-            updateUI();
-            
-            // සැබෑ ක්‍රීඩාවකදී මෙතැනදී Firebase 'ready' status එක true කරන්න
+            document.getElementById('btn-bet').style.opacity = "0.5";
+
+            // මෙතැනදී Firebase එකේ 'player_ready' එක true කරන්න
+            // database.ref('rooms/room1/p1_ready').set(true);
+
+            checkBothReady();
+        }
+
+        // දෙන්නම ලෑස්තිද කියලා පරීක්ෂා කරන function එක
+        function checkBothReady() {
+            // දැනට පරීක්ෂා කිරීම සඳහා තත්පර 3කට පසු ප්‍රතිවාදියා ආවා යැයි සලකමු
+            // සැබෑ ඇප් එකේදී Firebase Listener එකක් මගින් මෙය සිදු වේ
             setTimeout(() => {
-                isGameActive = true;
-                document.getElementById('pot-ui').innerText = "Rs. " + (ROUND_FEE * 2);
-                nextRound();
-            }, 2000); // 2 තත්පරයකින් දෙන්නම ලෑස්ති වුණා කියලා හිතන්න
+                opponentReady = true; // ප්‍රතිවාදියා ලෑස්ති වුණා කියලා හිතමු
+                
+                if(iAmReady && opponentReady) {
+                    beginMatch();
+                }
+            }, 3000); 
+        }
+
+        function beginMatch() {
+            myBal -= ROUND_FEE;
+            document.getElementById('pot-ui').innerText = "Rs. " + (ROUND_FEE * 2);
+            updateUI();
+            isGameActive = true;
+            document.getElementById('btn-bet').innerText = "MATCH LIVE!";
+            nextRound();
         }
 
         function handleInput(choice) {
@@ -87,22 +108,42 @@
                 myBal += WIN_PER_CLICK;
                 oppBal -= WIN_PER_CLICK;
                 updateUI();
-                if(myBal >= MAX_LIMIT) window.location.href = "dashboard.html";
+                if(myBal >= MAX_LIMIT) {
+                    alert("උපරිම සීමාවට පැමිණියා!");
+                    window.location.href = "dashboard.html";
+                }
                 nextRound();
             } else {
-                endGame("වැරදියි! ඔබ පැරදුණා.");
+                endGame("වැරදියි! ඔබ පැරදුණා. (රු. 15 පද්ධතියට)");
             }
         }
 
         function nextRound() {
             let txt = colors[Math.floor(Math.random() * colors.length)];
             targetColor = colors[Math.floor(Math.random() * colors.length)];
-            document.getElementById('display-word').innerText = txt.toUpperCase();
-            document.getElementById('display-word').style.color = targetColor;
+            let el = document.getElementById('display-word');
+            el.innerText = txt.toUpperCase();
+            el.style.color = targetColor;
+            
+            // Timer එක පටන් ගැනීම
+            startTimer();
+        }
+
+        let timer;
+        function startTimer() {
+            clearInterval(timer);
+            let start = Date.now();
+            timer = setInterval(() => {
+                let diff = Date.now() - start;
+                let prog = Math.max(0, 100 - (diff / 1500 * 100));
+                document.getElementById('timer-fill').style.width = prog + "%";
+                if(diff >= 1500) endGame("කාලය අවසන්!");
+            }, 20);
         }
 
         function endGame(msg) {
             isGameActive = false;
+            clearInterval(timer);
             alert(msg);
             location.reload();
         }
@@ -113,7 +154,6 @@
         }
 
         function cashOut() {
-            alert("Cash out සාර්ථකයි!");
             window.location.href = "dashboard.html";
         }
     </script>
