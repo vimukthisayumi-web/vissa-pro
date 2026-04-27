@@ -1,67 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="si">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VISSA PRO - Online</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vissa-Pro Firebase Battle</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
     <style>
-        body { margin: 0; background: #0f172a; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; color: white; font-family: sans-serif; }
-        #game-container { position: relative; border: 20px solid #5c3a21; border-radius: 30px; width: 90vw; height: 90vw; max-width: 500px; max-height: 500px; background: #f3e5ab; margin-top: 20px; }
-        canvas { width: 100%; height: 100%; display: block; }
-        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 100; text-align: center; padding: 20px; }
+        :root { --primary: #ff4757; --secondary: #2ed573; --bg: #0f0f0f; --card: #1e1e1e; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .match-header { background: var(--card); padding: 15px; display: flex; justify-content: space-around; align-items: center; border-bottom: 3px solid var(--primary); }
+        .p-balance { font-size: 20px; font-weight: bold; }
+        #timer-wrap { width: 100%; height: 6px; background: #222; }
+        #timer-fill { width: 100%; height: 100%; background: var(--primary); }
+        .game-zone { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #display-word { font-size: 60px; font-weight: 900; text-transform: uppercase; margin-bottom: 30px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; max-width: 400px; }
+        .color-btn { height: 80px; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 0 #000; }
+        .footer { background: var(--card); padding: 15px; display: flex; gap: 10px; }
+        .action-btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <div id="overlay"><h1>ක්‍රීඩකයා එනතුරු රැඳී සිටින්න...</h1></div>
-        <canvas id="carromCanvas"></canvas>
+    <div class="match-header">
+        <div style="text-align:center">
+            <div style="font-size:10px; color:#888;">ඔබ</div>
+            <div id="my-bal-ui" class="p-balance">Rs. 100</div>
+        </div>
+        <div style="color:var(--secondary); font-weight:bold; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 20px;">
+            POT: <span id="pot-ui">Rs. 0</span>
+        </div>
+        <div style="text-align:center">
+            <div style="font-size:10px; color:#888;">ප්‍රතිවාදියා</div>
+            <div id="opp-bal-ui" class="p-balance">Rs. 100</div>
+        </div>
     </div>
 
+    <div id="timer-wrap"><div id="timer-fill"></div></div>
+
+    <main class="game-zone">
+        <div id="display-word">READY</div>
+        <div class="btn-grid">
+            <button class="color-btn" style="background:#ff4d4d" onclick="handleInput('red')"></button>
+            <button class="color-btn" style="background:#1e90ff" onclick="handleInput('blue')"></button>
+            <button class="color-btn" style="background:#2ed573" onclick="handleInput('green')"></button>
+            <button class="color-btn" style="background:#ffa502" onclick="handleInput('yellow')"></button>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <button id="btn-bet" class="action-btn" style="background:var(--primary)" onclick="startBet()">START BET (Rs. 15)</button>
+        <button id="btn-cashout" class="action-btn" style="background:var(--secondary)" onclick="cashOut()">CASH OUT</button>
+    </footer>
+
     <script>
-        // Firebase Config
+        // 1. Firebase Initialization
         const firebaseConfig = {
             apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
-            databaseURL: "https://vissaprocarrom-default-rtdb.firebaseio.com",
-            projectId: "vissaprocarrom"
+            authDomain: "vissaprocarrom.firebaseapp.com",
+            projectId: "vissaprocarrom",
+            storageBucket: "vissaprocarrom.firebasestorage.app",
+            messagingSenderId: "722305696915",
+            appId: "1:722305696915:web:056e8be25a245ac29c7966",
+            measurementId: "G-KCKJLGX5J5"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Match Logic
-        const matchId = "match_001"; // ඔයාට ඕනේ නම් මේක වෙනස් කරන්න පුළුවන්
-        let myRole = "";
+        // 2. Room & Player Logic
+        // පරීක්ෂා කිරීම සඳහා මෙහි roomId සහ role එක අතින් වෙනස් කරන්න (p1 හෝ p2)
+        let roomId = "battle_room_1"; 
+        let myRole = "p1"; 
+        let oppRole = (myRole === "p1") ? "p2" : "p1";
+        
+        let myBal = 100;
+        let isGameActive = false;
+        let targetColor = "";
+        const ROUND_FEE = 15;
+        const MAX_LIMIT = 180;
 
-        // 1. ප්ලේයර් කවුද කියලා තීරණය කරමු
-        db.ref('matches/' + matchId).transaction(function(data) {
-            if (!data) return { P1: true };
-            if (!data.P2) return { P1: data.P1, P2: true };
-            return data;
-        }, function(error, committed, snapshot) {
-            if (committed) {
-                const val = snapshot.val();
-                myRole = val.P2 ? "P2" : "P1";
-                checkStart();
-            }
-        });
+        // 3. Start Bet Function
+        function startBet() {
+            if(myBal < ROUND_FEE) { alert("සල්ලි මදි!"); return; }
+            
+            // Firebase එකේ ලෑස්තියි කියලා සලකුණු කිරීම
+            db.ref('rooms/' + roomId + '/' + myRole + '_ready').set(true);
+            
+            document.getElementById('btn-bet').innerText = "WAITING...";
+            document.getElementById('btn-bet').disabled = true;
+            document.getElementById('btn-bet').style.opacity = "0.5";
 
-        // 2. දෙන්නම ආවම ගේම් එක පටන් ගන්න
-        function checkStart() {
-            db.ref('matches/' + matchId).on('value', (snapshot) => {
+            // දෙන්නම ලෑස්තිද කියලා බලන Listener එක
+            db.ref('rooms/' + roomId).on('value', (snapshot) => {
                 const data = snapshot.val();
-                if (data.P1 && data.P2) {
-                    document.getElementById('overlay').style.display = 'none';
-                    startCarromGame(); // මෙතනින් තමයි ඔයාගේ game logic එක පටන් ගන්නේ
+                if (data && data.p1_ready && data.p2_ready && !isGameActive) {
+                    beginMatch();
                 }
             });
         }
 
-        function startCarromGame() {
-            console.log("Game Starting as: " + myRole);
-            // මෙතනට ඔයාගේ Physics සහ Game Loop එක දාන්න
+        function beginMatch() {
+            isGameActive = true;
+            myBal -= ROUND_FEE;
+            document.getElementById('pot-ui').innerText = "Rs. 30";
+            document.getElementById('btn-bet').innerText = "LIVE!";
+            updateUI();
+            nextRound();
+        }
+
+        function nextRound() {
+            if(!isGameActive) return;
+            const colors = ["red", "blue", "green", "yellow"];
+            let txt = colors[Math.floor(Math.random() * colors.length)];
+            targetColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            let el = document.getElementById('display-word');
+            el.innerText = txt.toUpperCase();
+            el.style.color = targetColor;
+            
+            startTimer();
+        }
+
+        let timer;
+        function startTimer() {
+            clearInterval(timer);
+            let start = Date.now();
+            timer = setInterval(() => {
+                let diff = Date.now() - start;
+                let prog = Math.max(0, 100 - (diff / 1500 * 100));
+                document.getElementById('timer-fill').style.width = prog + "%";
+                if(diff >= 1500) endGame("TIME OUT! (රු. 15 පද්ධතියට)");
+            }, 20);
+        }
+
+        function handleInput(choice) {
+            if(!isGameActive) return;
+            if(choice === targetColor) {
+                myBal += 10;
+                updateUI();
+                if(myBal >= MAX_LIMIT) {
+                    alert("උපරිම සීමාව (180) සම්පූර්ණයි!");
+                    window.location.href = "dashboard.html";
+                }
+                nextRound();
+            } else {
+                endGame("වැරදියි! (රු. 15 පද්ධතියට)");
+            }
+        }
+
+        function endGame(msg) {
+            isGameActive = false;
+            clearInterval(timer);
+            // Firebase එක Reset කිරීම
+            db.ref('rooms/' + roomId).update({p1_ready: false, p2_ready: false});
+            alert(msg);
+            location.reload();
+        }
+
+        function updateUI() {
+            document.getElementById('my-bal-ui').innerText = "Rs. " + myBal;
+        }
+
+        function cashOut() {
+            window.location.href = "dashboard.html";
         }
     </script>
 </body>
