@@ -12,7 +12,7 @@
         .loader { border: 4px solid #333; border-top: 4px solid gold; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 15px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .finding-text { font-size: 14px; color: gold; margin-bottom: 10px; letter-spacing: 1px; }
-        #error-display { color: #ff4444; font-size: 11px; margin-top: 15px; word-break: break-all; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 5px; display: none; }
+        #error-display { color: #ff4444; font-size: 12px; margin-top: 15px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; display: none; }
     </style>
 </head>
 <body>
@@ -24,7 +24,7 @@
         <div style="display: flex; justify-content: space-around; align-items: center; margin-top: 20px;">
             <div>
                 <div class="p-img" id="my-avatar">ඔබ</div>
-                <p style="font-size: 12px; margin-top: 12px; color: white;">ඔබ</p>
+                <p style="font-size: 12px; margin-top: 12px;">ඔබ</p>
             </div>
             <div class="vs-circle">VS</div>
             <div>
@@ -34,7 +34,7 @@
         </div>
         
         <div id="error-display"></div>
-        <button onclick="cancelMatch()" style="background:none; border:1px solid #ff4444; color:#ff4444; padding:10px 25px; border-radius:12px; margin-top: 35px; cursor:pointer; font-weight: bold; font-size: 13px;">CANCEL</button>
+        <button onclick="cancelMatch()" style="background:none; border:1px solid #ff4444; color:#ff4444; padding:10px 25px; border-radius:12px; margin-top: 35px; cursor:pointer;">CANCEL</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -51,7 +51,7 @@
             appId: "1:722305696915:web:056e8be25a245ac29c7966"
         };
         
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
@@ -59,67 +59,62 @@
         const fee = parseInt(urlParams.get('fee')) || 100;
 
         auth.onAuthStateChanged(user => {
-            if (user) {
-                startMatchingProcess(user.uid);
-            } else {
-                window.location.href = "index.html";
-            }
+            if (user) startMatchingProcess(user.uid);
+            else window.location.href = "index.html";
         });
 
         async function startMatchingProcess(myId) {
             const waitingRef = db.collection("waiting_players");
-            const errorDisplay = document.getElementById('error-display');
-            
+            const matchesRef = db.collection("active_matches");
+
             try {
-                // 1. කලින් සිටි ප්ලේයර්ස්ලා සෙවීම (තමන් නොවන)
-                const snapshot = await waitingRef.where("fee", "==", fee).orderBy("time", "asc").limit(1).get();
-                
-                let found = false;
-                if (!snapshot.empty) {
-                    const doc = snapshot.docs[0];
-                    if (doc.id !== myId) {
-                        found = true;
-                        const opponentId = doc.id;
-                        
-                        await db.collection("active_matches").doc(opponentId).set({
-                            player1: opponentId,
-                            player2: myId,
-                            fee: fee,
-                            status: "playing",
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
+                // 1. පෝලිමේ සිටින තමන් නොවන ප්ලේයර් කෙනෙක් සෙවීම
+                const snapshot = await waitingRef
+                    .where("fee", "==", fee)
+                    .orderBy("time", "asc")
+                    .get();
 
-                        await waitingRef.doc(opponentId).delete();
-                        updateUIFound();
-                        goToGame(opponentId);
-                    }
-                }
+                let opponent = null;
+                snapshot.forEach(doc => {
+                    if (doc.id !== myId) { opponent = doc.data(); }
+                });
 
-                if (!found) {
-                    // කෙනෙක් නැතිනම් තමන්ව ලැයිස්තුවට එක් කිරීම
+                if (opponent) {
+                    // 🤝 ප්‍රතිවාදියෙක් හමුවුණා! Match එක හදනවා
+                    const matchId = opponent.uid; // පරණ ප්ලේයර්ගේ ID එක matchId එක ලෙස ගනී
+                    await matchesRef.doc(matchId).set({
+                        player1: opponent.uid,
+                        player2: myId,
+                        fee: fee,
+                        status: "playing",
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    // පෝලිමෙන් ප්‍රතිවාදියා අයින් කරයි
+                    await waitingRef.doc(opponent.uid).delete();
+                    
+                    updateUIFound();
+                    goToGame(matchId);
+                } else {
+                    // 🕒 කවුරුත් නැහැ, පෝලිමට ඇතුළු වී බලා සිටී
                     await waitingRef.doc(myId).set({
                         uid: myId,
                         fee: fee,
                         time: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
-                    // වෙනත් කෙනෙක් මැච් එකක් සාදන තෙක් බලා සිටීම
-                    db.collection("active_matches").doc(myId).onSnapshot(doc => {
-                        if (doc.exists) {
+                    // 🛰️ වෙනත් කෙනෙක් තමන්ව තෝරාගන්නා තෙක් Listen කරයි
+                    const unsubscribe = matchesRef.doc(myId).onSnapshot(doc => {
+                        if (doc.exists && doc.data().status === "playing") {
+                            unsubscribe();
                             updateUIFound();
                             goToGame(myId);
                         }
                     });
                 }
             } catch (err) {
-                console.error("Matchmaking error:", err);
-                errorDisplay.style.display = "block";
-                const link = err.message.match(/https:\/\/console\.firebase\.google\.com[^\s]+/);
-                if (link) {
-                    errorDisplay.innerHTML = `<a href="${link[0]}" target="_blank" style="color: gold;">මෙතන ඔබා Index එක සාදන්න (අත්‍යවශ්‍යයි)</a>`;
-                } else {
-                    errorDisplay.innerText = "Error: " + err.message;
-                }
+                console.error(err);
+                document.getElementById('error-display').style.display = "block";
+                document.getElementById('error-display').innerText = "Database Error: Index එකක් අවශ්‍ය විය හැක.";
             }
         }
 
@@ -127,22 +122,21 @@
             document.getElementById('opp-avatar').style.opacity = "1";
             document.getElementById('opp-avatar').style.borderStyle = "solid";
             document.getElementById('opp-name').innerText = "ප්‍රතිවාදියා හමුවුණා!";
-            document.getElementById('status').innerText = "තරඟයට පිවිසෙමින්...";
+            document.getElementById('status').innerText = "සූදානම් වන්න...";
+            document.getElementById('main-loader').style.borderTopColor = "#00ffcc";
         }
 
         function goToGame(matchId) {
             setTimeout(() => {
                 window.location.href = "color_online.html?matchId=" + matchId;
-            }, 1500);
+            }, 2000);
         }
 
         function cancelMatch() {
-            const user = auth.currentUser;
-            if (user) {
-                db.collection("waiting_players").doc(user.uid).delete().then(() => {
-                    window.location.href = "dashboard.html";
-                });
-            }
+            const uid = auth.currentUser.uid;
+            db.collection("waiting_players").doc(uid).delete().then(() => {
+                window.location.href = "dashboard.html";
+            });
         }
     </script>
 </body>
