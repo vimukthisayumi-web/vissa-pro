@@ -6,38 +6,25 @@
     <title>VISSA PRO - Dashboard</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #050510; color: white; margin: 0; padding-bottom: 80px; overflow-x: hidden; }
-        
-        /* Header & Balance */
         .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; }
         .user-info { display: flex; align-items: center; gap: 10px; }
         .avatar { width: 45px; height: 45px; background: orange; border-radius: 50%; border: 2px solid gold; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; }
         #user-uid { font-size: 10px; color: gold; cursor: pointer; display: block; margin-top: 2px; background: rgba(255,215,0,0.1); padding: 2px 5px; border: 0.5px dashed gold; border-radius: 4px; }
         .wallet { background: rgba(0,0,0,0.6); padding: 8px 15px; border-radius: 20px; border: 1px solid gold; display: flex; align-items: center; gap: 5px; cursor: pointer; }
         .plus-icon { background: #008000; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; }
-
-        /* Main Card */
         .main-card { background: url('https://play-movies.googleusercontent.com/vx_S_0QYJ5bK_g950vEa4vO0G5gL6yP2E8wGk8D0A5T5n0Y1vJg5N3e5N2wD2Q') center; background-size: cover; height: 200px; margin: 15px; border-radius: 20px; border: 2px solid gold; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 15px; box-shadow: 0 0 15px gold; }
-        .btn-play-main { background: linear-gradient(45deg, #ffcc00, #ff6600); border: none; padding: 12px 40px; border-radius: 25px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; color: black; }
-
-        /* Modals */
+        .btn-play-main { background: linear-gradient(45deg, #ffcc00, #ff6600); border: none; padding: 12px 40px; border-radius: 25px; font-weight: bold; font-size: 16px; cursor: pointer; color: black; }
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
-        .modal-content { background: #0d0d2b; border: 2px solid #ffcc00; width: 85%; margin: 25% auto; border-radius: 20px; padding: 25px; text-align: center; box-shadow: 0 0 20px #ffcc00; }
-
-        /* Mode Selection Buttons */
-        .mode-btn { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; font-weight: bold; font-size: 16px; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
+        .modal-content { background: #0d0d2b; border: 2px solid #ffcc00; width: 85%; margin: 25% auto; border-radius: 20px; padding: 25px; text-align: center; }
+        .mode-btn { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; font-weight: bold; font-size: 16px; border: none; cursor: pointer; }
         .online-btn { background: #007bff; color: white; }
         .practice-btn { background: #8bc34a; color: white; }
-
-        /* Room Slider */
-        .room-container { display: flex; overflow-x: auto; gap: 15px; padding: 15px 0; scroll-snap-type: x mandatory; scrollbar-width: none; }
-        .room-container::-webkit-scrollbar { display: none; }
-        .room-card { min-width: 85%; background: rgba(255,255,255,0.05); border: 1.5px solid gold; border-radius: 15px; padding: 20px; scroll-snap-align: center; text-align: center; }
-        .room-title { color: gold; font-weight: bold; font-size: 14px; text-transform: uppercase; }
+        .room-container { display: flex; overflow-x: auto; gap: 15px; padding: 15px 0; scrollbar-width: none; }
+        .room-card { min-width: 85%; background: rgba(255,255,255,0.05); border: 1.5px solid gold; border-radius: 15px; padding: 20px; text-align: center; }
+        .room-title { color: gold; font-weight: bold; }
         .room-price { font-size: 32px; font-weight: bold; margin: 5px 0; color: #fff; }
         .room-win { color: #00ffcc; font-size: 14px; margin-bottom: 15px; }
-        .btn-join { background: #ffcc00; color: black; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; }
-
-        /* Bottom Nav */
+        .btn-join { background: #ffcc00; color: black; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; }
         .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: #0a0a20; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; }
         .nav-item { text-align: center; color: #888; font-size: 10px; flex: 1; cursor: pointer; }
         .nav-item.active { color: #ffcc00; }
@@ -65,56 +52,32 @@
 
     <div id="modeModal" class="modal">
         <div class="modal-content">
-            <h2 style="color:gold; font-size: 18px; margin-bottom: 20px;">සෙල්ලම් කරන ආකාරය තෝරන්න</h2>
+            <h2 style="color:gold;">SELECT MODE</h2>
             <button class="mode-btn online-btn" onclick="openRooms()">🌐 PLAY ONLINE</button>
-            <button class="mode-btn practice-btn" onclick="checkPracticeLimit()">🎓 FREE PRACTICE (<span id="practice-count">3</span> Left)</button>
-            <div style="margin-top: 15px; color: #aaa; cursor: pointer;" onclick="closeModal('modeModal')">CANCEL</div>
+            <button class="mode-btn practice-btn" onclick="checkPracticeLimit()">🎓 PRACTICE (<span id="practice-count">3</span>/3)</button>
+            <div style="margin-top: 15px; color: #aaa;" onclick="closeModal('modeModal')">CANCEL</div>
         </div>
     </div>
 
     <div id="roomModal" class="modal">
         <div class="modal-content" style="width: 90%;">
-            <h2 style="color:gold; font-size: 18px;">තරඟ කාමරය තෝරන්න</h2>
+            <h2 style="color:gold;">CHOOSE A ROOM</h2>
             <div class="room-container">
-                <div class="room-card">
-                    <div class="room-title">Starter Room</div>
-                    <div class="room-price">LKR 100</div>
-                    <div class="room-win">Win: LKR 180</div>
-                    <button class="btn-join" onclick="startMatchmaking(100, 180)">JOIN</button>
-                </div>
-                <div class="room-card">
-                    <div class="room-title">Pro Room</div>
-                    <div class="room-price">LKR 300</div>
-                    <div class="room-win">Win: LKR 540</div>
-                    <button class="btn-join" onclick="startMatchmaking(300, 540)">JOIN</button>
-                </div>
-                <div class="room-card">
-                    <div class="room-title">Master Room</div>
-                    <div class="room-price">LKR 500</div>
-                    <div class="room-win">Win: LKR 900</div>
-                    <button class="btn-join" onclick="startMatchmaking(500, 900)">JOIN</button>
-                </div>
-                <div class="room-card">
-                    <div class="room-title">Expert Room</div>
-                    <div class="room-price">LKR 1000</div>
-                    <div class="room-win">Win: LKR 1800</div>
-                    <button class="btn-join" onclick="startMatchmaking(1000, 1800)">JOIN</button>
-                </div>
-                <div class="room-card">
-                    <div class="room-title">Legend Room</div>
-                    <div class="room-price">LKR 2000</div>
-                    <div class="room-win">Win: LKR 3600</div>
-                    <button class="btn-join" onclick="startMatchmaking(2000, 3600)">JOIN</button>
-                </div>
+                <div class="room-card"><div class="room-title">Starter</div><div class="room-price">100</div><div class="room-win">Win: 180</div><button class="btn-join" onclick="startMatchmaking(100, 180)">JOIN</button></div>
+                <div class="room-card"><div class="room-title">Pro</div><div class="room-price">300</div><div class="room-win">Win: 540</div><button class="btn-join" onclick="startMatchmaking(300, 540)">JOIN</button></div>
+                <div class="room-card"><div class="room-title">Master</div><div class="room-price">500</div><div class="room-win">Win: 900</div><button class="btn-join" onclick="startMatchmaking(500, 900)">JOIN</button></div>
+                <div class="room-card"><div class="room-title">Expert</div><div class="room-price">1000</div><div class="room-win">Win: 1800</div><button class="btn-join" onclick="startMatchmaking(1000, 1800)">JOIN</button></div>
+                <div class="room-card"><div class="room-title">Legend</div><div class="room-price">2000</div><div class="room-win">Win: 3600</div><button class="btn-join" onclick="startMatchmaking(2000, 3600)">JOIN</button></div>
             </div>
-            <div style="margin-top: 15px; color: #aaa; cursor: pointer;" onclick="closeModal('roomModal')">BACK</div>
+            <div style="margin-top: 15px; color: #aaa;" onclick="closeModal('roomModal')">BACK</div>
         </div>
     </div>
 
     <div class="bottom-nav">
         <div class="nav-item active" onclick="goToPage('dashboard.html')">🏠<br>Home</div>
         <div class="nav-item" onclick="goToPage('wallet.html')">👜<br>Wallet</div>
-        <div class="nav-item">🏆<br>Events</div>
+        <div class="nav-item" onclick="goToPage('events.html')">🏆<br>Events</div>
+        <div class="nav-item" onclick="goToPage('notifications.html')">🔔<br>Alerts</div>
         <div class="nav-item" onclick="goToPage('profile.html')">👤<br>Profile</div>
     </div>
 
@@ -137,73 +100,45 @@
 
         let myData = { uid: '', balance: 0, practiceCount: 3 };
 
-        // 🚀 User Auth සහ Auto-Creation Logic
         auth.onAuthStateChanged(user => {
             if (user) {
                 myData.uid = user.uid;
                 const userRef = db.collection("users").doc(user.uid);
-
                 userRef.onSnapshot(doc => {
                     if (doc.exists) {
                         const data = doc.data();
                         myData.balance = data.balance || 0;
                         myData.practiceCount = (data.practiceCount !== undefined) ? data.practiceCount : 3;
-                        
                         document.getElementById('user-name').innerText = data.username || "Player";
                         document.getElementById('user-balance').innerText = myData.balance;
                         document.getElementById('practice-count').innerText = myData.practiceCount;
                         document.getElementById('nav-avatar').innerText = (data.username || "P").charAt(0).toUpperCase();
-                        document.getElementById('user-uid').innerText = "UID: " + user.uid.substring(0,10) + "...";
+                        document.getElementById('user-uid').innerText = "UID: " + user.uid.substring(0,8);
                     } else {
-                        // පළමු වරට ලොග් වන විට දත්ත සැකසීම
-                        userRef.set({
-                            username: "Player_" + Math.floor(Math.random() * 1000),
-                            balance: 0,
-                            practiceCount: 3,
-                            uid: user.uid
-                        });
+                        userRef.set({ username: "Player_" + Math.floor(Math.random()*1000), balance: 0, practiceCount: 3 });
                     }
                 });
-            } else {
-                window.location.href = "index.html";
-            }
+            } else window.location.href = "index.html";
         });
 
-        // 🎓 Practice Limit Logic
         function checkPracticeLimit() {
             if (myData.practiceCount > 0) {
-                db.collection("users").doc(myData.uid).update({
-                    practiceCount: myData.practiceCount - 1
-                }).then(() => {
-                    window.location.href = "color_practice.html";
-                });
-            } else {
-                alert("ඔබේ නොමිලේ ලබාදෙන වාර 3 අවසන්! කරුණාකර Deposit කර Online Play කරන්න.");
-            }
+                db.collection("users").doc(myData.uid).update({ practiceCount: myData.practiceCount - 1 })
+                .then(() => window.location.href = "color_practice.html");
+            } else alert("නොමිලේ වාර 3 අවසන්! කරුණාකර Deposit කරන්න.");
         }
 
-        // 🌐 Matchmaking Logic
         function startMatchmaking(fee, win) {
-            if (myData.balance < fee) return alert("මුදල් ප්‍රමාණවත් නැත! කරුණාකර Deposit කරන්න.");
-            
-            // සල්ලි Wallet එකෙන් අඩු කර Game එකට යැවීම
-            db.collection("users").doc(myData.uid).update({
-                balance: myData.balance - fee
-            }).then(() => {
-                window.location.href = `waiting.html?fee=${fee}&win=${win}&mode=online`;
-            });
-        }
-
-        function copyUID() {
-            navigator.clipboard.writeText(auth.currentUser.uid).then(() => {
-                alert("UID එක Copy විය!");
-            });
+            if (myData.balance < fee) return alert("මුදල් මදි!");
+            db.collection("users").doc(myData.uid).update({ balance: myData.balance - fee })
+            .then(() => window.location.href = `waiting.html?fee=${fee}&win=${win}&mode=online`);
         }
 
         function showModal(id) { document.getElementById(id).style.display = 'block'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function openRooms() { closeModal('modeModal'); showModal('roomModal'); }
         function goToPage(url) { window.location.href = url; }
+        function copyUID() { navigator.clipboard.writeText(myData.uid); alert("UID Copied!"); }
     </script>
 </body>
-    </html>
+</html>
