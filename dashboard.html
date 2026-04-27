@@ -7,13 +7,29 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #050510; color: white; margin: 0; padding-bottom: 80px; overflow-x: hidden; }
         .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; }
-        .avatar { width: 45px; height: 45px; background: orange; border-radius: 50%; border: 2px solid gold; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .avatar { width: 45px; height: 45px; background: orange; border-radius: 50%; border: 2px solid gold; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; }
         .wallet { background: rgba(0,0,0,0.6); padding: 8px 15px; border-radius: 20px; border: 1px solid gold; cursor: pointer; }
-        .main-card { background: #0d0d2b; height: 200px; margin: 15px; border-radius: 20px; border: 2px solid gold; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .btn-play-main { background: linear-gradient(45deg, #ffcc00, #ff6600); border: none; padding: 12px 40px; border-radius: 25px; font-weight: bold; cursor: pointer; }
+        
+        .main-card { 
+            background: linear-gradient(135deg, #0d0d2b 0%, #1a1a4f 100%);
+            margin: 15px; padding: 30px 15px; border-radius: 25px; 
+            border: 2px solid gold; text-align: center;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        }
+        
+        .practice-status { color: #0cf; font-size: 13px; margin-top: 10px; }
+        .btn-play-main { 
+            background: linear-gradient(45deg, #ffcc00, #ff6600); 
+            border: none; padding: 15px 50px; border-radius: 30px; 
+            font-weight: bold; cursor: pointer; color: black; font-size: 18px;
+            box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4);
+            margin-top: 15px;
+        }
+
         .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: #0a0a20; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; }
-        .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; }
+        .nav-item { text-align: center; color: #888; font-size: 10px; cursor: pointer; text-decoration: none; }
         .nav-item.active { color: #ffcc00; }
+        .nav-icon { font-size: 22px; display: block; margin-bottom: 3px; }
     </style>
 </head>
 <body>
@@ -22,8 +38,8 @@
         <div style="display: flex; align-items: center; gap: 10px;">
             <div class="avatar" id="nav-avatar">?</div>
             <div>
-                <div id="user-name" style="font-weight:bold;">Loading...</div>
-                <div id="user-uid" style="font-size: 10px; color: gold;">UID: Loading...</div>
+                <div id="user-name" style="font-weight:bold; font-size: 16px;">Loading...</div>
+                <div id="user-uid" style="font-size: 10px; color: gold; opacity: 0.8;">UID: Loading...</div>
             </div>
         </div>
         <div class="wallet" onclick="window.location.href='wallet.html'">
@@ -32,15 +48,17 @@
     </div>
 
     <div class="main-card">
-        <h2 style="color:white;">WELCOME TO VISSA</h2>
+        <h1 style="margin: 0; font-size: 24px; letter-spacing: 2px;">VISSA PRO</h1>
+        <p style="color: #aaa; font-size: 14px;">Welcome to the ultimate challenge!</p>
         <button class="btn-play-main" onclick="window.location.href='game.html'">PLAY NOW</button>
+        <div class="practice-status">Practice Left: <span id="practice-count">0</span></div>
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item active">🏠<br>Home</div>
-        <div class="nav-item" onclick="window.location.href='wallet.html'">👜<br>Wallet</div>
-        <div class="nav-item" onclick="window.location.href='events.html'">🏆<br>Events</div>
-        <div class="nav-item" onclick="window.location.href='profile.html'">👤<br>Profile</div>
+        <a class="nav-item active">🏠<span class="nav-icon"></span>Home</a>
+        <a href="wallet.html" class="nav-item">👜<span class="nav-icon"></span>Wallet</a>
+        <a href="events.html" class="nav-item">🏆<span class="nav-icon"></span>Events</a>
+        <a href="profile.html" class="nav-item">👤<span class="nav-icon"></span>Profile</a>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -64,22 +82,32 @@
         auth.onAuthStateChanged(user => {
             if (user) {
                 const userRef = db.collection("users").doc(user.uid);
+                
+                // Real-time Update (onSnapshot)
                 userRef.onSnapshot((doc) => {
                     if (doc.exists) {
                         const data = doc.data();
+                        
+                        // දත්ත UI එකට දැමීම
                         document.getElementById('user-name').innerText = data.username || "Player";
                         document.getElementById('user-balance').innerText = parseFloat(data.balance || 0).toFixed(2);
+                        document.getElementById('practice-count').innerText = data.practiceCount || 0;
                         document.getElementById('nav-avatar').innerText = (data.username || "P").charAt(0).toUpperCase();
-                        document.getElementById('user-uid').innerText = "UID: " + user.uid.substring(0,10);
+                        document.getElementById('user-uid').innerText = "UID: " + user.uid.substring(0,10) + "...";
                     } else {
-                        // 🚀 මෙන්න මේ ටිකෙන් තමයි අලුත් කෙනෙක් ආවම UID එකත් එක්කම Save වෙන්නේ
+                        // අලුත් User කෙනෙක් නම් Default දත්ත ටික UID එක යටතේම හදනවා
                         userRef.set({
                             uid: user.uid, 
                             username: "Player_" + Math.floor(Math.random() * 1000),
                             balance: 0,
+                            practiceCount: 3,
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }).then(() => {
+                            console.log("New User Account Created!");
                         });
                     }
+                }, error => {
+                    console.log("Error fetching user data:", error);
                 });
             } else {
                 window.location.href = "index.html";
