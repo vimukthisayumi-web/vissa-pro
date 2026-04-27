@@ -3,22 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VISSA PRO - Admin Panel</title>
+    <title>VISSA PRO - Super Admin</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #08051a; color: white; padding: 20px; }
-        .section-title { color: gold; border-bottom: 2px solid #333; padding-bottom: 10px; margin-top: 30px; }
-        .request-card { background: #1a1a4f; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 48%; }
+        .section-title { color: gold; border-bottom: 2px solid #444; padding-bottom: 10px; margin-top: 40px; text-transform: uppercase; letter-spacing: 1px; }
+        .request-card { background: #11113d; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #333; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .deposit-card { border-left: 6px solid #28a745; }
+        .withdraw-card { border-left: 6px solid #dc3545; }
+        .info-row { margin-bottom: 8px; display: flex; justify-content: space-between; border-bottom: 0.5px solid #222; padding-bottom: 4px; }
+        .label { color: gold; font-size: 12px; font-weight: bold; }
+        .value { color: #fff; font-size: 14px; }
+        .bank-details { background: #000; color: #00d4ff; padding: 10px; border-radius: 8px; font-size: 13px; margin: 10px 0; border: 1px dashed #444; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.3s; }
         .approve-btn { background: #28a745; color: white; }
         .reject-btn { background: #dc3545; color: white; }
-        .info-value { font-size: 16px; margin-bottom: 10px; color: #fff; font-weight: bold; }
+        .btn:hover { opacity: 0.8; transform: translateY(-2px); }
     </style>
 </head>
 <body>
 
-    <h1 style="text-align: center; color: gold;">VISSA PRO Admin</h1>
+    <h1 style="text-align: center; color: gold; margin-bottom: 5px;">VISSA PRO</h1>
+    <p style="text-align: center; color: gray; font-size: 12px; margin-top: 0;">SUPER ADMIN MANAGEMENT</p>
+
     <h2 class="section-title">💰 Deposit Requests</h2>
     <div id="deposit-list">පරීක්ෂා කරමින්...</div>
+
+    <h2 class="section-title">🏦 Withdrawal Requests</h2>
+    <div id="withdraw-list">පරීක්ෂා කරමින්...</div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
@@ -36,52 +48,96 @@
 
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
-        // 1. Deposit ලැයිස්තුව ලබා ගැනීම
-        db.collection("deposits").where("status", "==", "pending")
-        .onSnapshot((snapshot) => {
-            const listDiv = document.getElementById('deposit-list');
-            listDiv.innerHTML = snapshot.empty ? "<p>අලුත් Deposit නැත.</p>" : "";
-            
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const div = document.createElement("div");
-                div.className = "request-card";
-                div.innerHTML = `
-                    <div class="info-value">User: ${data.userName || 'User'}</div>
-                    <div class="info-value" style="color:#28a745;">Amount: LKR ${data.amount}</div>
-                    <button class="btn approve-btn" onclick="approveDeposit('${doc.id}', '${data.uid}', ${data.amount})">APPROVE ✅</button>
-                    <button class="btn reject-btn" onclick="rejectRequest('${doc.id}')">REJECT ❌</button>
-                `;
-                listDiv.appendChild(div);
-            });
+        const MY_ADMIN_UID = "EM6KUIjRNzS8WFXxBrAEYIrZXzK2";
+
+        auth.onAuthStateChanged(user => {
+            if (user && user.uid === MY_ADMIN_UID) {
+                initAdmin();
+            } else {
+                alert("අවසර නැත!");
+                window.location.href = "index.html";
+            }
         });
 
-        // 2. Approve Deposit (වැදගත්ම කොටස)
-        async function approveDeposit(docId, userId, amount) {
-            if (!userId || userId === "undefined") return alert("Error: User ID එකක් නැත!");
-            if (!confirm("මෙම මුදල තැන්පත් කරන්නද?")) return;
-
-            const userRef = db.collection("users").doc(userId);
-            const depositRef = db.collection("deposits").doc(docId);
-
-            try {
-                await db.runTransaction(async (t) => {
-                    const userDoc = await t.get(userRef);
-                    if (!userDoc.exists) throw "User ගිණුම සොයාගත නොහැක!";
-                    
-                    const currentBal = parseFloat(userDoc.data().balance) || 0;
-                    t.update(userRef, { balance: currentBal + parseFloat(amount) });
-                    t.update(depositRef, { status: "completed" });
+        function initAdmin() {
+            // Load Pending Deposits
+            db.collection("deposits").where("status", "==", "pending").onSnapshot(s => {
+                const list = document.getElementById('deposit-list');
+                list.innerHTML = s.empty ? "<p style='color:gray;'>අලුත් Deposit නැත.</p>" : "";
+                s.forEach(doc => {
+                    const d = doc.data();
+                    list.innerHTML += `
+                        <div class="request-card deposit-card">
+                            <div class="info-row"><span class="label">USER</span><span class="value">${d.userName || 'Player'}</span></div>
+                            <div class="info-row"><span class="label">AMOUNT</span><span class="value" style="color:#28a745; font-weight:bold;">LKR ${d.amount}</span></div>
+                            <div class="info-row"><span class="label">UID</span><span class="value" style="font-size:10px;">${d.uid}</span></div>
+                            <div class="btn-group">
+                                <button class="btn approve-btn" onclick="handleDeposit('${doc.id}', '${d.uid}', ${d.amount})">APPROVE ✅</button>
+                                <button class="btn reject-btn" onclick="rejectReq('deposits', '${doc.id}')">REJECT ❌</button>
+                            </div>
+                        </div>`;
                 });
-                alert("සාර්ථකයි!");
-            } catch (e) {
-                alert("Error: " + e);
-            }
+            });
+
+            // Load Pending Withdrawals
+            db.collection("withdrawals").where("status", "==", "pending").onSnapshot(s => {
+                const list = document.getElementById('withdraw-list');
+                list.innerHTML = s.empty ? "<p style='color:gray;'>අලුත් Withdrawal නැත.</p>" : "";
+                s.forEach(doc => {
+                    const d = doc.data();
+                    list.innerHTML += `
+                        <div class="request-card withdraw-card">
+                            <div class="info-row"><span class="label">USER</span><span class="value">${d.userName}</span></div>
+                            <div class="info-row"><span class="label">AMOUNT</span><span class="value" style="color:#dc3545; font-weight:bold;">LKR ${d.amount}</span></div>
+                            <div class="bank-details">${d.bankDetails || 'No Bank Info'}</div>
+                            <div class="btn-group">
+                                <button class="btn approve-btn" onclick="handleWithdraw('${doc.id}', '${d.uid}', ${d.amount})">PAID & CLEAR ✅</button>
+                                <button class="btn reject-btn" onclick="rejectReq('withdrawals', '${doc.id}')">REJECT ❌</button>
+                            </div>
+                        </div>`;
+                });
+            });
         }
 
-        function rejectRequest(docId) {
-            db.collection("deposits").doc(docId).update({ status: "rejected" }).then(() => alert("ප්‍රතික්ෂේප කළා."));
+        async function handleDeposit(docId, uId, amt) {
+            if (!confirm("LKR " + amt + " තැන්පත් කරන්නද?")) return;
+            const uRef = db.collection("users").doc(uId);
+            const dRef = db.collection("deposits").doc(docId);
+            try {
+                await db.runTransaction(async (t) => {
+                    const doc = await t.get(uRef);
+                    if (!doc.exists) throw "User Not Found";
+                    let newBal = (parseFloat(doc.data().balance) || 0) + parseFloat(amt);
+                    t.update(uRef, { balance: newBal });
+                    t.update(dRef, { status: "completed" });
+                });
+                alert("Deposit Success!");
+            } catch (e) { alert("Error: " + e); }
+        }
+
+        async function handleWithdraw(docId, uId, amt) {
+            if (!confirm("ඔබ මුදල් යැවුවාද? මෙය Approve කළ පසු User ගේ Balance එකෙන් LKR " + amt + " කැපෙනු ඇත.")) return;
+            const uRef = db.collection("users").doc(uId);
+            const wRef = db.collection("withdrawals").doc(docId);
+            try {
+                await db.runTransaction(async (t) => {
+                    const doc = await t.get(uRef);
+                    if (!doc.exists) throw "User Not Found";
+                    let curBal = parseFloat(doc.data().balance) || 0;
+                    if (curBal < amt) throw "Balance එක මදි!";
+                    t.update(uRef, { balance: curBal - parseFloat(amt) });
+                    t.update(wRef, { status: "completed" });
+                });
+                alert("Withdrawal Processed!");
+            } catch (e) { alert("Error: " + e); }
+        }
+
+        function rejectReq(col, docId) {
+            if (confirm("මෙය ප්‍රතික්ෂේප කරන්නද?")) {
+                db.collection(col).doc(docId).update({ status: "rejected" });
+            }
         }
     </script>
 </body>
