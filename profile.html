@@ -19,19 +19,59 @@
             border-radius: 50%; border: 4px solid gold; 
             box-shadow: 0 0 15px gold; object-fit: cover;
         }
-        h3 { margin-top: 10px; margin-bottom: 5px; }
-        .info-container { margin-top: 30px; text-align: left; }
+        h3 { margin-top: 10px; margin-bottom: 5px; color: gold; }
+        
+        /* UID Styling */
+        .uid-box {
+            background: rgba(255, 217, 0, 0.1);
+            color: #ccc;
+            font-size: 11px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            cursor: pointer;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 217, 0, 0.3);
+        }
+        .uid-box:active { background: gold; color: black; }
+
+        .info-container { text-align: left; max-width: 400px; margin: 0 auto; }
         .info-box { 
             background: rgba(255,255,255,0.05); padding: 15px; 
             border-radius: 15px; margin-bottom: 12px; border-left: 4px solid #0cf;
         }
-        .label { font-size: 11px; color: #aaa; text-transform: uppercase; }
-        .value { font-size: 15px; font-weight: bold; margin-top: 3px; word-wrap: break-word; }
+        .label { font-size: 11px; color: #aaa; text-transform: uppercase; margin-bottom: 5px; }
+        .value { font-size: 15px; font-weight: bold; word-wrap: break-word; color: #fff; }
+        
+        /* Edit Name Input */
+        .edit-input {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #444;
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            width: 100%;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        .save-btn {
+            background: #0cf;
+            color: black;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
         .logout-btn { 
             background: linear-gradient(45deg, #ff4444, #8b0000); 
-            color: white; border: none; padding: 15px; width: 100%; 
+            color: white; border: none; padding: 15px; width: 100%; max-width: 400px;
             border-radius: 15px; margin-top: 30px; font-weight: bold;
         }
+
         .bottom-nav { 
             position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; 
             background: #100a2e; display: flex; justify-content: space-around; 
@@ -40,22 +80,34 @@
         .nav-item { text-align: center; color: #888; font-size: 10px; flex: 1; text-decoration: none; }
         .nav-item.active { color: gold; }
         .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
-        input { background: rgba(255,255,255,0.1); color: white; border: 1px solid #555; padding: 8px; border-radius: 5px; width: 70%; }
-        button.verify-btn { background: #ffcc00; color: black; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-top: 5px; }
+
+        input.phone-input { background: rgba(255,255,255,0.1); color: white; border: 1px solid #555; padding: 8px; border-radius: 5px; width: 60%; }
+        button.verify-btn { background: #ffcc00; color: black; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <h2>මගේ පැතිකඩ</h2>
-    
+
     <div class="profile-container">
         <img id="user-photo" class="profile-img" src="https://via.placeholder.com/100" alt="Profile">
     </div>
-
-    <h3 id="user-name">Loading...</h3>
-    <p style="color: gold; font-size: 12px;">VISSA PRO Member</p>
+    
+    <h3 id="display-name">Loading...</h3>
+    <p style="color: #0cf; font-size: 12px; margin-bottom: 5px;">VISSA PRO Member</p>
+    
+    <div class="uid-box" onclick="copyUID()">
+        UID: <span id="user-uid">Loading...</span> <span style="margin-left:5px;">📋</span>
+    </div>
 
     <div class="info-container">
+        
+        <div class="info-box">
+            <div class="label">පරිශීලක නාමය</div>
+            <input type="text" id="name-input" class="edit-input" placeholder="ඔබේ නම ඇතුළත් කරන්න">
+            <button class="save-btn" onclick="updateProfileName()">Update Name</button>
+        </div>
+
         <div class="info-box">
             <div class="label">ඊමේල් ලිපිනය</div>
             <div id="user-email" class="value">Loading...</div>
@@ -64,11 +116,11 @@
         <div class="info-box">
             <div class="label">දුරකථන අංකය</div>
             <div id="phone-container">
-                <input type="text" id="phone-number" placeholder="+947XXXXXXXX">
-                <button class="verify-btn" onclick="sendOTP()">Code එවන්න</button>
+                <input type="text" id="phone-number" class="phone-input" placeholder="+947XXXXXXXX">
+                <button class="verify-btn" onclick="sendOTP()">OTP එවන්න</button>
             </div>
             <div id="otp-section" style="display: none; margin-top: 10px;">
-                <input type="text" id="verification-code" placeholder="OTP Code එක">
+                <input type="text" id="verification-code" class="phone-input" style="width: 50%;" placeholder="Code">
                 <button class="verify-btn" style="background: #00ff00;" onclick="verifyOTP()">Verify</button>
             </div>
         </div>
@@ -77,10 +129,10 @@
             <div class="label">ජයග්‍රහණ ගණන</div>
             <div class="value">05</div>
         </div>
+
     </div>
 
     <div id="recaptcha-container"></div>
-
     <button class="logout-btn" onclick="logoutUser()">LOGOUT</button>
 
     <div class="bottom-nav">
@@ -93,9 +145,9 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        // *** මෙන්න මේ කොටස තමයි ඔයාට අඩු වෙලා තිබුණේ ***
         const firebaseConfig = {
             apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
             authDomain: "vissaprocarrom.firebaseapp.com",
@@ -106,19 +158,20 @@
             measurementId: "G-KCKJLGX5J5"
         };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        // පරිශීලක තොරතුරු පෙන්වීම
-        firebase.auth().onAuthStateChanged((user) => {
+        // Load User Data
+        auth.onAuthStateChanged((user) => {
             if (user) {
-                document.getElementById('user-name').innerText = user.displayName || "පරිශීලකයා";
+                document.getElementById('display-name').innerText = user.displayName || "පරිශීලකයා";
+                document.getElementById('name-input').value = user.displayName || "";
                 document.getElementById('user-email').innerText = user.email;
-                if (user.photoURL) {
-                    document.getElementById('user-photo').src = user.photoURL;
-                }
-                // දුරකථන අංකය දැනටමත් තිබේ නම්
+                document.getElementById('user-uid').innerText = user.uid;
+
+                if (user.photoURL) document.getElementById('user-photo').src = user.photoURL;
+
                 if (user.phoneNumber) {
                     document.getElementById('phone-container').innerHTML = '<div class="value">' + user.phoneNumber + '</div>';
                 }
@@ -127,44 +180,67 @@
             }
         });
 
-        // Phone Auth කොටස
+        // 1. Update Name (Auth and Firestore)
+        function updateProfileName() {
+            const newName = document.getElementById('name-input').value;
+            const user = auth.currentUser;
+
+            if (newName.trim() === "") {
+                alert("කරුණාකර නමක් ඇතුළත් කරන්න.");
+                return;
+            }
+
+            // Update Firebase Auth Profile
+            user.updateProfile({ displayName: newName })
+            .then(() => {
+                // Update Firestore for Dashboard usage
+                return db.collection("users").doc(user.uid).set({
+                    userName: newName
+                }, { merge: true });
+            })
+            .then(() => {
+                document.getElementById('display-name').innerText = newName;
+                alert("නම සාර්ථකව යාවත්කාලීන වුණා!");
+            })
+            .catch((error) => alert("Error: " + error.message));
+        }
+
+        // 2. Copy UID Function
+        function copyUID() {
+            const uidText = document.getElementById('user-uid').innerText;
+            navigator.clipboard.writeText(uidText).then(() => {
+                alert("UID එක Copy කරගත්තා: " + uidText);
+            });
+        }
+
+        // 3. Phone OTP Logic
         var confirmationResult;
-        
-        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-            'size': 'invisible'
-        });
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { 'size': 'invisible' });
 
         function sendOTP() {
             const phoneNumber = document.getElementById('phone-number').value;
             if (!phoneNumber.startsWith('+')) {
-                alert("කරුණාකර රටේ කේතය සහිතව අංකය ඇතුළත් කරන්න (උදා: +947...)");
+                alert("රටේ කේතය අවශ්‍යයි! (උදා: +94)");
                 return;
             }
-            
-            firebase.auth().signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
-                .then((result) => {
-                    confirmationResult = result;
-                    alert("Code එක එවුවා!");
-                    document.getElementById('otp-section').style.display = 'block';
-                }).catch((error) => {
-                    alert("දෝෂයක්: " + error.message);
-                });
+            auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
+            .then((result) => {
+                confirmationResult = result;
+                alert("Code එක එවුවා!");
+                document.getElementById('otp-section').style.display = 'block';
+            }).catch((error) => alert("දෝෂයක්: " + error.message));
         }
 
         function verifyOTP() {
             const code = document.getElementById('verification-code').value;
-            confirmationResult.confirm(code).then((result) => {
-                alert("සාර්ථකව Verify වුණා!");
-                location.reload(); // පිටුව refresh කර අංකය පෙන්වන්න
-            }).catch((error) => {
-                alert("වැරදි Code එකක්!");
-            });
+            confirmationResult.confirm(code).then(() => {
+                alert("සාර්ථකයි!");
+                location.reload();
+            }).catch(() => alert("වැරදි Code එකක්!"));
         }
 
         function logoutUser() {
-            firebase.auth().signOut().then(() => {
-                window.location.href = "index.html";
-            });
+            auth.signOut().then(() => window.location.href = "index.html");
         }
     </script>
 </body>
