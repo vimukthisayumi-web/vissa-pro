@@ -12,7 +12,6 @@
             margin: 0; padding: 20px; padding-bottom: 100px;
             text-align: center; 
         }
-        /* Profile Image */
         .profile-container { position: relative; width: 100px; height: 100px; margin: 20px auto; }
         .profile-img { 
             width: 100px; height: 100px; 
@@ -21,7 +20,6 @@
         }
         h3 { margin-top: 10px; margin-bottom: 5px; color: gold; }
         
-        /* UID Styling */
         .uid-box {
             background: rgba(255, 217, 0, 0.1);
             color: #ccc;
@@ -33,7 +31,6 @@
             margin-bottom: 20px;
             border: 1px solid rgba(255, 217, 0, 0.3);
         }
-        .uid-box:active { background: gold; color: black; }
 
         .info-container { text-align: left; max-width: 400px; margin: 0 auto; }
         .info-box { 
@@ -43,28 +40,20 @@
         .label { font-size: 11px; color: #aaa; text-transform: uppercase; margin-bottom: 5px; }
         .value { font-size: 15px; font-weight: bold; word-wrap: break-word; color: #fff; }
         
-        /* Edit Name Input */
         .edit-input {
             background: rgba(255,255,255,0.1);
             border: 1px solid #444;
             color: white;
-            padding: 8px;
+            padding: 10px;
             border-radius: 8px;
             width: 100%;
-            margin-top: 5px;
             box-sizing: border-box;
         }
         .save-btn {
-            background: #0cf;
-            color: black;
-            border: none;
-            padding: 5px 15px;
-            border-radius: 5px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-top: 10px;
-            cursor: pointer;
+            background: #0cf; color: black; border: none; padding: 10px 20px;
+            border-radius: 8px; font-weight: bold; margin-top: 10px; cursor: pointer; width: 100%;
         }
+        .locked-msg { color: #00ff00; font-size: 12px; font-weight: bold; margin-top: 5px; display: none; }
 
         .logout-btn { 
             background: linear-gradient(45deg, #ff4444, #8b0000); 
@@ -80,9 +69,6 @@
         .nav-item { text-align: center; color: #888; font-size: 10px; flex: 1; text-decoration: none; }
         .nav-item.active { color: gold; }
         .nav-icon { font-size: 20px; display: block; margin-bottom: 2px; }
-
-        input.phone-input { background: rgba(255,255,255,0.1); color: white; border: 1px solid #555; padding: 8px; border-radius: 5px; width: 60%; }
-        button.verify-btn { background: #ffcc00; color: black; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -97,15 +83,19 @@
     <p style="color: #0cf; font-size: 12px; margin-bottom: 5px;">VISSA PRO Member</p>
     
     <div class="uid-box" onclick="copyUID()">
-        UID: <span id="user-uid">Loading...</span> <span style="margin-left:5px;">📋</span>
+        UID: <span id="user-uid">Loading...</span> 📋
     </div>
 
     <div class="info-container">
         
         <div class="info-box">
             <div class="label">පරිශීලක නාමය</div>
-            <input type="text" id="name-input" class="edit-input" placeholder="ඔබේ නම ඇතුළත් කරන්න">
-            <button class="save-btn" onclick="updateProfileName()">Update Name</button>
+            <div id="name-view" style="display: none;" class="value"></div>
+            <div id="name-edit-section">
+                <input type="text" id="name-input" class="edit-input" placeholder="ඔබේ නම ඇතුළත් කරන්න">
+                <button id="save-name-btn" class="save-btn" onclick="updateProfileName()">Update Name</button>
+            </div>
+            <div id="locked-msg" class="locked-msg">✓ නම තහවුරු කර ඇත</div>
         </div>
 
         <div class="info-box">
@@ -115,19 +105,7 @@
 
         <div class="info-box">
             <div class="label">දුරකථන අංකය</div>
-            <div id="phone-container">
-                <input type="text" id="phone-number" class="phone-input" placeholder="+947XXXXXXXX">
-                <button class="verify-btn" onclick="sendOTP()">OTP එවන්න</button>
-            </div>
-            <div id="otp-section" style="display: none; margin-top: 10px;">
-                <input type="text" id="verification-code" class="phone-input" style="width: 50%;" placeholder="Code">
-                <button class="verify-btn" style="background: #00ff00;" onclick="verifyOTP()">Verify</button>
-            </div>
-        </div>
-
-        <div class="info-box">
-            <div class="label">ජයග්‍රහණ ගණන</div>
-            <div class="value">05</div>
+            <div id="phone-display" class="value">සම්බන්ධ කර නැත</div>
         </div>
 
     </div>
@@ -162,81 +140,64 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Load User Data
         auth.onAuthStateChanged((user) => {
             if (user) {
-                document.getElementById('display-name').innerText = user.displayName || "පරිශීලකයා";
-                document.getElementById('name-input').value = user.displayName || "";
                 document.getElementById('user-email').innerText = user.email;
                 document.getElementById('user-uid').innerText = user.uid;
-
                 if (user.photoURL) document.getElementById('user-photo').src = user.photoURL;
+                if (user.phoneNumber) document.getElementById('phone-display').innerText = user.phoneNumber;
 
-                if (user.phoneNumber) {
-                    document.getElementById('phone-container').innerHTML = '<div class="value">' + user.phoneNumber + '</div>';
-                }
+                // Firestore එකෙන් නම තියෙනවාද බලන්න
+                db.collection("users").doc(user.uid).get().then((doc) => {
+                    if (doc.exists && doc.data().userName) {
+                        // නම තියෙනවා නම් Edit Section එක අයින් කරන්න
+                        document.getElementById('display-name').innerText = doc.data().userName;
+                        document.getElementById('name-view').innerText = doc.data().userName;
+                        document.getElementById('name-view').style.display = 'block';
+                        document.getElementById('name-edit-section').style.display = 'none';
+                        document.getElementById('locked-msg').style.display = 'block';
+                    } else {
+                        document.getElementById('display-name').innerText = "නමක් ඇතුළත් කරන්න";
+                    }
+                });
             } else {
                 window.location.href = "index.html";
             }
         });
 
-        // 1. Update Name (Auth and Firestore)
         function updateProfileName() {
             const newName = document.getElementById('name-input').value;
             const user = auth.currentUser;
 
-            if (newName.trim() === "") {
-                alert("කරුණාකර නමක් ඇතුළත් කරන්න.");
+            if (newName.trim().length < 3) {
+                alert("කරුණාකර අවම අකුරු 3ක නමක් ඇතුළත් කරන්න.");
                 return;
             }
 
-            // Update Firebase Auth Profile
-            user.updateProfile({ displayName: newName })
-            .then(() => {
-                // Update Firestore for Dashboard usage
-                return db.collection("users").doc(user.uid).set({
-                    userName: newName
-                }, { merge: true });
-            })
-            .then(() => {
-                document.getElementById('display-name').innerText = newName;
-                alert("නම සාර්ථකව යාවත්කාලීන වුණා!");
-            })
-            .catch((error) => alert("Error: " + error.message));
-        }
-
-        // 2. Copy UID Function
-        function copyUID() {
-            const uidText = document.getElementById('user-uid').innerText;
-            navigator.clipboard.writeText(uidText).then(() => {
-                alert("UID එක Copy කරගත්තා: " + uidText);
+            db.collection("users").doc(user.uid).get().then((doc) => {
+                if (doc.exists && doc.data().userName) {
+                    alert("ඔබ දැනටමත් නමක් ඇතුළත් කර ඇත!");
+                } else {
+                    // Update Auth and Firestore
+                    user.updateProfile({ displayName: newName }).then(() => {
+                        return db.collection("users").doc(user.uid).set({
+                            userName: newName,
+                            email: user.email,
+                            uid: user.uid
+                        }, { merge: true });
+                    }).then(() => {
+                        alert("සාර්ථකයි! නම තහවුරු වුණා.");
+                        location.reload();
+                    }).catch((err) => alert("Error: " + err.message));
+                }
             });
         }
 
-        // 3. Phone OTP Logic
-        var confirmationResult;
-        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { 'size': 'invisible' });
-
-        function sendOTP() {
-            const phoneNumber = document.getElementById('phone-number').value;
-            if (!phoneNumber.startsWith('+')) {
-                alert("රටේ කේතය අවශ්‍යයි! (උදා: +94)");
-                return;
-            }
-            auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier)
-            .then((result) => {
-                confirmationResult = result;
-                alert("Code එක එවුවා!");
-                document.getElementById('otp-section').style.display = 'block';
-            }).catch((error) => alert("දෝෂයක්: " + error.message));
-        }
-
-        function verifyOTP() {
-            const code = document.getElementById('verification-code').value;
-            confirmationResult.confirm(code).then(() => {
-                alert("සාර්ථකයි!");
-                location.reload();
-            }).catch(() => alert("වැරදි Code එකක්!"));
+        function copyUID() {
+            const uidText = document.getElementById('user-uid').innerText;
+            navigator.clipboard.writeText(uidText).then(() => {
+                alert("UID එක Copy වුණා!");
+            });
         }
 
         function logoutUser() {
