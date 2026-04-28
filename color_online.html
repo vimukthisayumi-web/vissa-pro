@@ -22,6 +22,7 @@
         .color-btn { height: 85px; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 5px 0 #000; }
         .footer { position: fixed; bottom: 20px; left: 0; right: 0; background: var(--card); padding: 15px; display: flex; gap: 10px; margin: 0 15px; border-radius: 15px; border: 1px solid #333; }
         .action-btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; text-transform: uppercase; }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -36,7 +37,7 @@
         </div>
         <div style="text-align:center">
             <div style="font-size:10px; color:#aaa;">ප්‍රතිවාදියා</div>
-            <div id="opp-status-ui" class="p-balance">WAITING</div>
+            <div id="opp-status-ui" class="p-balance" style="color: #ff4757;">WAITING</div>
         </div>
     </div>
 
@@ -53,7 +54,7 @@
     </main>
 
     <footer class="footer">
-        <button id="btn-bet" class="action-btn" style="background:var(--primary)" onclick="startBet()">JOIN MATCH</button>
+        <button id="btn-bet" class="action-btn" style="background:var(--primary)" onclick="startBet()" disabled>CONNECTING...</button>
         <button class="action-btn" style="background:#444" onclick="exitGame()">EXIT</button>
     </footer>
 
@@ -66,7 +67,7 @@
             messagingSenderId: "722305696915",
             appId: "1:722305696915:web:056e8be25a245ac29c7966"
         };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const fs = firebase.firestore();
         const auth = firebase.auth();
@@ -86,42 +87,67 @@
                 const userRef = fs.collection("users").doc(user.uid);
                 const doc = await userRef.get();
                 if (doc.exists && gameWallet === 0) {
-                    gameWallet = entryFee; // Dashboard එකෙන් දැනටමත් සල්ලි කැපී ඇති බව උපකල්පනය කෙරේ
+                    gameWallet = entryFee; 
                     updateUI();
                 }
-                joinBattleRoom();
+                joinBattleRoom(user.uid);
             } else { window.location.href = "index.html"; }
         });
 
-        function joinBattleRoom() {
+        function joinBattleRoom(uid) {
             const roomRef = db.ref('rooms/' + roomId);
+            
             roomRef.once('value').then((snapshot) => {
-                const data = snapshot.val();
-                if (!data || !data.p1) { myRole = "p1"; roomRef.update({ p1: auth.currentUser.uid, p1_ready: false, winner: null }); }
-                else if (!data.p2) { myRole = "p2"; roomRef.update({ p2: auth.currentUser.uid, p2_ready: false }); }
-                else { alert("Room Full!"); return; }
-                document.getElementById('role-ui').innerText = myRole.toUpperCase();
-            });
+                let data = snapshot.val() || {};
+                
+                // දැනටමත් ඉන්නවාද කියා බැලීම
+                if (data.p1 === uid) { myRole = "p1"; }
+                else if (data.p2 === uid) { myRole = "p2"; }
+                // නැත්නම් අලුතින් ඇතුල් කිරීම
+                else if (!data.p1) { myRole = "p1"; roomRef.update({ p1: uid, p1_ready: false, winner: null }); }
+                else if (!data.p2) { myRole = "p2"; roomRef.update({ p2: uid, p2_ready: false }); }
+                else { alert("Room Full!"); window.location.href = "dashboard.html"; return; }
 
-            // දෙන්නාම Ready ද කියා බැලීමට Listener එකක්
+                document.getElementById('role-ui').innerText = myRole.toUpperCase();
+                
+                let btn = document.getElementById('btn-bet');
+                btn.disabled = false;
+                btn.innerText = "JOIN MATCH";
+                
+                listenToRoom(); // ලොග් වූ පසු අනිත් අය ගැන විමසිල්ලෙන් සිටීම
+            });
+        }
+
+        function listenToRoom() {
             db.ref('rooms/' + roomId).on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (!data) return;
 
-                // ප්‍රතිවාදියාගේ තත්ත්වය යාවත්කාලීන කිරීම
                 let oppRole = (myRole === "p1") ? "p2" : "p1";
+                let oppStatusUI = document.getElementById('opp-status-ui');
+
+                // ප්‍රතිවාදියාගේ තත්ත්වය සජීවීව යාවත්කාලීන කිරීම
                 if (data[oppRole]) {
-                    document.getElementById('opp-status-ui').innerText = data[oppRole + '_ready'] ? "READY" : "JOINED";
+                    if (data[oppRole + '_ready']) {
+                        oppStatusUI.innerText = "READY!";
+                        oppStatusUI.style.color = "#2ed573"; // Green
+                    } else {
+                        oppStatusUI.innerText = "JOINED";
+                        oppStatusUI.style.color = "gold"; // Yellow/Gold
+                    }
+                } else {
+                    oppStatusUI.innerText = "WAITING...";
+                    oppStatusUI.style.color = "#ff4757"; // Red
                 }
 
-                // දෙන්නාම Ready නම් Game එක පටන් ගන්න
-                if (data.p1_ready && data.p2_ready && !isGameActive) {
+                // දෙන්නාම Ready ද කියා පරීක්ෂා කිරීම
+                if (data.p1_ready === true && data.p2_ready === true && !isGameActive) {
                     beginMatch();
                 }
 
-                // ජයග්‍රාහකයා පරීක්ෂා කිරීම (ප්‍රතිවාදියා පැරදුනොත් මට සල්ලි ලැබීම)
+                // ජයග්‍රාහකයා පරීක්ෂා කිරීම
                 if (data.winner === myRole && !isGameActive) {
-                    gameWallet += (entryFee * 1.8); // ජයග්‍රාහී මුදල
+                    gameWallet += (entryFee * 1.8); 
                     db.ref('rooms/' + roomId + '/winner').set(null);
                     updateUI();
                     alert("ප්‍රතිවාදියා පරාදයි! ඔබ ජයග්‍රහණය කළා.");
@@ -130,15 +156,19 @@
         }
 
         function startBet() {
-            db.ref('rooms/' + roomId + '/' + myRole + '_ready').set(true);
-            document.getElementById('btn-bet').innerText = "WAITING...";
-            document.getElementById('btn-bet').disabled = true;
+            if(!myRole) return;
+            // Database එකේ තමන්ගේ Status එක Ready බවට පත් කිරීම
+            db.ref('rooms/' + roomId).update({ [myRole + '_ready']: true });
+            
+            let btn = document.getElementById('btn-bet');
+            btn.innerText = "WAITING FOR P2...";
+            btn.disabled = true;
         }
 
         function beginMatch() {
             isGameActive = true;
             document.getElementById('pot-ui').innerText = "Rs. " + (entryFee * 2);
-            document.getElementById('btn-bet').innerText = "PLAYING";
+            document.getElementById('btn-bet').innerText = "LIVE BATTLE!";
             nextRound();
         }
 
@@ -158,7 +188,7 @@
             let start = Date.now();
             timer = setInterval(() => {
                 let diff = Date.now() - start;
-                let prog = Math.max(0, 100 - (diff / 1500 * 100)); // තත්පර 1.5 කාලය
+                let prog = Math.max(0, 100 - (diff / 1500 * 100)); // තත්පර 1.5
                 document.getElementById('timer-fill').style.width = prog + "%";
                 if(diff >= 1500) endGame(false);
             }, 20);
@@ -175,17 +205,17 @@
             clearInterval(timer);
             if(!win) {
                 alert("ඔබ පරාදයි!");
-                // පරාද වූ විට අනිත් කෙනා winner ලෙස සලකුණු කරයි
                 db.ref('rooms/' + roomId).update({ 
                     winner: (myRole === "p1" ? "p2" : "p1"),
                     p1_ready: false, 
                     p2_ready: false 
                 });
-                gameWallet = 0; // පරාද වූ නිසා wallet එක හිස් වේ
+                gameWallet = 0; 
                 updateUI();
             }
-            document.getElementById('btn-bet').innerText = "JOIN MATCH";
-            document.getElementById('btn-bet').disabled = false;
+            let btn = document.getElementById('btn-bet');
+            btn.innerText = "PLAY AGAIN";
+            btn.disabled = false;
         }
 
         function updateUI() {
@@ -193,12 +223,23 @@
         }
 
         async function exitGame() {
+            // Room එකෙන් අයින් වෙනවා කියලා DB එකට යැවීම
+            if (myRole) {
+                await db.ref('rooms/' + roomId).update({ [myRole]: null, [myRole + '_ready']: null });
+            }
             if (gameWallet > 0) {
                 const userRef = fs.collection("users").doc(auth.currentUser.uid);
                 await userRef.update({ balance: firebase.firestore.FieldValue.increment(gameWallet) });
             }
             window.location.href = "dashboard.html";
         }
+
+        // Browser එක Close කළොත් Room එකෙන් ස්වයංක්‍රීයව ඉවත් කිරීම
+        window.onbeforeunload = function() {
+            if (myRole && !isGameActive) {
+                db.ref('rooms/' + roomId).update({ [myRole]: null, [myRole + '_ready']: null });
+            }
+        };
     </script>
 </body>
 </html>
