@@ -10,15 +10,43 @@
     <style>
         :root { --primary: #ff4757; --secondary: #2ed573; --bg: #0f0f0f; --card: #1e1e1e; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
         .match-header { background: var(--card); padding: 15px; display: flex; justify-content: space-around; align-items: center; border-bottom: 3px solid var(--primary); }
         .p-balance { font-size: 20px; font-weight: bold; }
+        
         #timer-wrap { width: 100%; height: 6px; background: #222; }
-        #timer-fill { width: 100%; height: 100%; background: var(--primary); }
-        .game-zone { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #timer-fill { width: 100%; height: 100%; background: var(--primary); transition: width 0.1s linear; }
+        
+        .game-zone { 
+            flex-grow: 1; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            padding-bottom: 100px; /* Footer එකට ඉඩ තැබීමට */
+        }
+        
         #display-word { font-size: 60px; font-weight: 900; text-transform: uppercase; margin-bottom: 30px; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; max-width: 400px; }
         .color-btn { height: 80px; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 0 #000; }
-        .footer { background: var(--card); padding: 15px; display: flex; gap: 10px; }
+        
+        /* Footer එක පතුලෙන් ටිකක් උඩට ගෙන ඒම */
+        .footer { 
+            position: fixed;
+            bottom: 25px; /* පතුලේ සිට pixel 25ක් ඉහළට */
+            left: 0;
+            right: 0;
+            background: var(--card); 
+            padding: 15px; 
+            display: flex; 
+            gap: 10px; 
+            margin: 0 15px;
+            border-radius: 15px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            z-index: 100;
+        }
+        
         .action-btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; text-transform: uppercase; }
     </style>
 </head>
@@ -56,43 +84,32 @@
     </footer>
 
     <script>
-        // 1. Firebase Initialization
         const firebaseConfig = {
             apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
             authDomain: "vissaprocarrom.firebaseapp.com",
             projectId: "vissaprocarrom",
             storageBucket: "vissaprocarrom.firebasestorage.app",
             messagingSenderId: "722305696915",
-            appId: "1:722305696915:web:056e8be25a245ac29c7966",
-            measurementId: "G-KCKJLGX5J5"
+            appId: "1:722305696915:web:056e8be25a245ac29c7966"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 2. Room & Player Logic
-        // පරීක්ෂා කිරීම සඳහා මෙහි roomId සහ role එක අතින් වෙනස් කරන්න (p1 හෝ p2)
         let roomId = "battle_room_1"; 
         let myRole = "p1"; 
-        let oppRole = (myRole === "p1") ? "p2" : "p1";
-        
         let myBal = 100;
         let isGameActive = false;
         let targetColor = "";
         const ROUND_FEE = 15;
         const MAX_LIMIT = 180;
 
-        // 3. Start Bet Function
         function startBet() {
             if(myBal < ROUND_FEE) { alert("සල්ලි මදි!"); return; }
-            
-            // Firebase එකේ ලෑස්තියි කියලා සලකුණු කිරීම
             db.ref('rooms/' + roomId + '/' + myRole + '_ready').set(true);
-            
             document.getElementById('btn-bet').innerText = "WAITING...";
             document.getElementById('btn-bet').disabled = true;
             document.getElementById('btn-bet').style.opacity = "0.5";
 
-            // දෙන්නම ලෑස්තිද කියලා බලන Listener එක
             db.ref('rooms/' + roomId).on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data && data.p1_ready && data.p2_ready && !isGameActive) {
@@ -115,11 +132,9 @@
             const colors = ["red", "blue", "green", "yellow"];
             let txt = colors[Math.floor(Math.random() * colors.length)];
             targetColor = colors[Math.floor(Math.random() * colors.length)];
-            
             let el = document.getElementById('display-word');
             el.innerText = txt.toUpperCase();
             el.style.color = targetColor;
-            
             startTimer();
         }
 
@@ -153,7 +168,6 @@
         function endGame(msg) {
             isGameActive = false;
             clearInterval(timer);
-            // Firebase එක Reset කිරීම
             db.ref('rooms/' + roomId).update({p1_ready: false, p2_ready: false});
             alert(msg);
             location.reload();
