@@ -12,19 +12,20 @@
         #user-uid { font-size: 10px; color: gold; cursor: pointer; display: block; margin-top: 2px; background: rgba(255,215,0,0.1); padding: 2px 5px; border: 0.5px dashed gold; border-radius: 4px; }
         .wallet { background: rgba(0,0,0,0.6); padding: 8px 15px; border-radius: 20px; border: 1px solid gold; display: flex; align-items: center; gap: 5px; cursor: pointer; }
         .plus-icon { background: #008000; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; }
+        
+        /* Main UI Card */
         .main-card { background: url('https://play-movies.googleusercontent.com/vx_S_0QYJ5bK_g950vEa4vO0G5gL6yP2E8wGk8D0A5T5n0Y1vJg5N3e5N2wD2Q') center; background-size: cover; height: 200px; margin: 15px; border-radius: 20px; border: 2px solid gold; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 15px; box-shadow: 0 0 15px gold; }
-        .btn-play-main { background: linear-gradient(45deg, #ffcc00, #ff6600); border: none; padding: 12px 40px; border-radius: 25px; font-weight: bold; font-size: 16px; cursor: pointer; color: black; }
+        .btn-play-main { background: linear-gradient(45deg, #ffcc00, #ff6600); border: none; padding: 12px 40px; border-radius: 25px; font-weight: bold; font-size: 16px; cursor: pointer; color: black; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        
+        /* Modal Styles */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); }
-        .modal-content { background: #0d0d2b; border: 2px solid #ffcc00; width: 85%; margin: 25% auto; border-radius: 20px; padding: 25px; text-align: center; }
-        .mode-btn { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; font-weight: bold; font-size: 16px; border: none; cursor: pointer; }
-        .online-btn { background: #007bff; color: white; }
+        .modal-content { background: #0d0d2b; border: 2px solid #ffcc00; width: 85%; margin: 40% auto; border-radius: 20px; padding: 25px; text-align: center; }
+        .mode-btn { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; font-weight: bold; font-size: 16px; border: none; cursor: pointer; transition: 0.2s; }
+        .online-btn { background: linear-gradient(to right, #007bff, #00d4ff); color: white; }
         .practice-btn { background: #8bc34a; color: white; }
-        .room-container { display: flex; overflow-x: auto; gap: 15px; padding: 15px 0; scrollbar-width: none; }
-        .room-card { min-width: 85%; background: rgba(255,255,255,0.05); border: 1.5px solid gold; border-radius: 15px; padding: 20px; text-align: center; }
-        .room-title { color: gold; font-weight: bold; }
-        .room-price { font-size: 32px; font-weight: bold; margin: 5px 0; color: #fff; }
-        .room-win { color: #00ffcc; font-size: 14px; margin-bottom: 15px; }
-        .btn-join { background: #ffcc00; color: black; border: none; padding: 12px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; }
+        .mode-btn:active { transform: scale(0.95); }
+
+        /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: #0a0a20; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; }
         .nav-item { text-align: center; color: #888; font-size: 10px; flex: 1; cursor: pointer; }
         .nav-item.active { color: #ffcc00; }
@@ -52,23 +53,10 @@
 
     <div id="modeModal" class="modal">
         <div class="modal-content">
-            <h2 style="color:gold;">SELECT MODE</h2>
-            <button class="mode-btn online-btn" onclick="openRooms()">🌐 PLAY ONLINE</button>
+            <h2 style="color:gold; margin-top: 0;">සෙල්ලම් කරන්න</h2>
+            <button class="mode-btn online-btn" onclick="startGlobalGame()">🌐 PLAY ONLINE</button>
             <button class="mode-btn practice-btn" onclick="checkPracticeLimit()">🎓 PRACTICE (<span id="practice-count">3</span>/3)</button>
-            <div style="margin-top: 15px; color: #aaa;" onclick="closeModal('modeModal')">CANCEL</div>
-        </div>
-    </div>
-
-    <div id="roomModal" class="modal">
-        <div class="modal-content" style="width: 90%;">
-            <h2 style="color:gold;">CHOOSE A ROOM</h2>
-            <div class="room-container">
-                <div class="room-card"><div class="room-title">Starter</div><div class="room-price">100</div><div class="room-win">Win: 180</div><button class="btn-join" onclick="startMatchmaking(100, 180, 'room_100')">JOIN</button></div>
-                <div class="room-card"><div class="room-title">Pro</div><div class="room-price">300</div><div class="room-win">Win: 540</div><button class="btn-join" onclick="startMatchmaking(300, 540, 'room_300')">JOIN</button></div>
-                <div class="room-card"><div class="room-title">Master</div><div class="room-price">500</div><div class="room-win">Win: 900</div><button class="btn-join" onclick="startMatchmaking(500, 900, 'room_500')">JOIN</button></div>
-                <div class="room-card"><div class="room-title">Expert</div><div class="room-price">1000</div><div class="room-win">Win: 1800</div><button class="btn-join" onclick="startMatchmaking(1000, 1800, 'room_1000')">JOIN</button></div>
-            </div>
-            <div style="margin-top: 15px; color: #aaa;" onclick="closeModal('roomModal')">BACK</div>
+            <div style="margin-top: 15px; color: #aaa; cursor: pointer;" onclick="closeModal('modeModal')">CANCEL</div>
         </div>
     </div>
 
@@ -85,6 +73,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
+        // --- Firebase Config ---
         const firebaseConfig = {
             apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
             authDomain: "vissaprocarrom.firebaseapp.com",
@@ -93,15 +82,18 @@
             messagingSenderId: "722305696915",
             appId: "1:722305696915:web:056e8be25a245ac29c7966"
         };
+        
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
         let myData = { uid: '', balance: 0, practiceCount: 3 };
 
+        // --- Auth Listener ---
         auth.onAuthStateChanged(user => {
             if (user) {
                 myData.uid = user.uid;
+                // User Data Realtime Update
                 db.collection("users").doc(user.uid).onSnapshot(doc => {
                     if (doc.exists) {
                         const data = doc.data();
@@ -109,34 +101,45 @@
                         myData.practiceCount = (data.practiceCount !== undefined) ? data.practiceCount : 3;
                         
                         document.getElementById('user-name').innerText = data.userName || "Player";
-                        document.getElementById('user-balance').innerText = myData.balance;
+                        document.getElementById('user-balance').innerText = myData.balance.toFixed(2);
                         document.getElementById('practice-count').innerText = myData.practiceCount;
                         document.getElementById('nav-avatar').innerText = (data.userName || "P").charAt(0).toUpperCase();
                         document.getElementById('user-uid').innerText = "UID: " + user.uid.substring(0,8);
                     }
                 });
-            } else window.location.href = "index.html";
+            } else {
+                window.location.href = "index.html";
+            }
         });
+
+        // --- Functions ---
+
+        // Global Pool එකට කෙලින්ම යැවීම
+        function startGlobalGame() {
+            window.location.href = "color_online.html"; 
+        }
 
         function checkPracticeLimit() {
             if (myData.practiceCount > 0) {
-                db.collection("users").doc(myData.uid).update({ practiceCount: myData.practiceCount - 1 })
-                .then(() => window.location.href = "color_practice.html");
-            } else alert("නොමිලේ වාර 3 අවසන්! කරුණාකර Deposit කරන්න.");
-        }
-
-        // Matchmaking එකට දැන් Room ID එකත් යනවා
-        function startMatchmaking(fee, win, roomId) {
-            if (myData.balance < fee) return alert("මුදල් මදි!");
-            // මෙතනදී කෙලින්ම ගේම් පේජ් එකට යවන්න (පරාමිතීන් URL එකේ යනවා)
-            window.location.href = `color_online.html?room=${roomId}&price=${fee}`;
+                db.collection("users").doc(myData.uid).update({ 
+                    practiceCount: myData.practiceCount - 1 
+                }).then(() => {
+                    window.location.href = "color_practice.html";
+                });
+            } else {
+                alert("නොමිලේ වාර 3 අවසන්! කරුණාකර Deposit කර Online සෙල්ලම් කරන්න.");
+            }
         }
 
         function showModal(id) { document.getElementById(id).style.display = 'block'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function openRooms() { closeModal('modeModal'); showModal('roomModal'); }
+        
         function goToPage(url) { window.location.href = url; }
-        function copyUID() { navigator.clipboard.writeText(myData.uid); alert("UID Copied!"); }
+        
+        function copyUID() { 
+            navigator.clipboard.writeText(myData.uid); 
+            alert("UID Copied!"); 
+        }
     </script>
 </body>
 </html>
