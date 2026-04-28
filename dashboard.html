@@ -63,11 +63,10 @@
         <div class="modal-content" style="width: 90%;">
             <h2 style="color:gold;">CHOOSE A ROOM</h2>
             <div class="room-container">
-                <div class="room-card"><div class="room-title">Starter</div><div class="room-price">100</div><div class="room-win">Win: 180</div><button class="btn-join" onclick="startMatchmaking(100, 180)">JOIN</button></div>
-                <div class="room-card"><div class="room-title">Pro</div><div class="room-price">300</div><div class="room-win">Win: 540</div><button class="btn-join" onclick="startMatchmaking(300, 540)">JOIN</button></div>
-                <div class="room-card"><div class="room-title">Master</div><div class="room-price">500</div><div class="room-win">Win: 900</div><button class="btn-join" onclick="startMatchmaking(500, 900)">JOIN</button></div>
-                <div class="room-card"><div class="room-title">Expert</div><div class="room-price">1000</div><div class="room-win">Win: 1800</div><button class="btn-join" onclick="startMatchmaking(1000, 1800)">JOIN</button></div>
-                <div class="room-card"><div class="room-title">Legend</div><div class="room-price">2000</div><div class="room-win">Win: 3600</div><button class="btn-join" onclick="startMatchmaking(2000, 3600)">JOIN</button></div>
+                <div class="room-card"><div class="room-title">Starter</div><div class="room-price">100</div><div class="room-win">Win: 180</div><button class="btn-join" onclick="startMatchmaking(100, 180, 'room_100')">JOIN</button></div>
+                <div class="room-card"><div class="room-title">Pro</div><div class="room-price">300</div><div class="room-win">Win: 540</div><button class="btn-join" onclick="startMatchmaking(300, 540, 'room_300')">JOIN</button></div>
+                <div class="room-card"><div class="room-title">Master</div><div class="room-price">500</div><div class="room-win">Win: 900</div><button class="btn-join" onclick="startMatchmaking(500, 900, 'room_500')">JOIN</button></div>
+                <div class="room-card"><div class="room-title">Expert</div><div class="room-price">1000</div><div class="room-win">Win: 1800</div><button class="btn-join" onclick="startMatchmaking(1000, 1800, 'room_1000')">JOIN</button></div>
             </div>
             <div style="margin-top: 15px; color: #aaa;" onclick="closeModal('roomModal')">BACK</div>
         </div>
@@ -103,25 +102,17 @@
         auth.onAuthStateChanged(user => {
             if (user) {
                 myData.uid = user.uid;
-                const userRef = db.collection("users").doc(user.uid);
-                userRef.onSnapshot(doc => {
+                db.collection("users").doc(user.uid).onSnapshot(doc => {
                     if (doc.exists) {
                         const data = doc.data();
-                        
-                        // Profile එකෙන් සේව් කරන 'userName' එක මෙතනට ගන්නවා
-                        const finalName = data.userName || data.username || "Player";
-                        
                         myData.balance = data.balance || 0;
                         myData.practiceCount = (data.practiceCount !== undefined) ? data.practiceCount : 3;
                         
-                        document.getElementById('user-name').innerText = finalName;
+                        document.getElementById('user-name').innerText = data.userName || "Player";
                         document.getElementById('user-balance').innerText = myData.balance;
                         document.getElementById('practice-count').innerText = myData.practiceCount;
-                        document.getElementById('nav-avatar').innerText = finalName.charAt(0).toUpperCase();
+                        document.getElementById('nav-avatar').innerText = (data.userName || "P").charAt(0).toUpperCase();
                         document.getElementById('user-uid').innerText = "UID: " + user.uid.substring(0,8);
-                    } else {
-                        // මුල්ම වතාවට එන කෙනෙක් නම් Default values සේව් කරනවා
-                        userRef.set({ userName: "Player_" + Math.floor(Math.random()*1000), balance: 0, practiceCount: 3 });
                     }
                 });
             } else window.location.href = "index.html";
@@ -134,10 +125,11 @@
             } else alert("නොමිලේ වාර 3 අවසන්! කරුණාකර Deposit කරන්න.");
         }
 
-        function startMatchmaking(fee, win) {
+        // Matchmaking එකට දැන් Room ID එකත් යනවා
+        function startMatchmaking(fee, win, roomId) {
             if (myData.balance < fee) return alert("මුදල් මදි!");
-            db.collection("users").doc(myData.uid).update({ balance: myData.balance - fee })
-            .then(() => window.location.href = `waiting.html?fee=${fee}&win=${win}&mode=online`);
+            // මෙතනදී කෙලින්ම ගේම් පේජ් එකට යවන්න (පරාමිතීන් URL එකේ යනවා)
+            window.location.href = `game.html?room=${roomId}&price=${fee}`;
         }
 
         function showModal(id) { document.getElementById(id).style.display = 'block'; }
