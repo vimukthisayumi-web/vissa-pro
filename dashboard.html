@@ -107,15 +107,21 @@
                 userRef.onSnapshot(doc => {
                     if (doc.exists) {
                         const data = doc.data();
+                        
+                        // Profile එකෙන් සේව් කරන 'userName' එක මෙතනට ගන්නවා
+                        const finalName = data.userName || data.username || "Player";
+                        
                         myData.balance = data.balance || 0;
                         myData.practiceCount = (data.practiceCount !== undefined) ? data.practiceCount : 3;
-                        document.getElementById('user-name').innerText = data.username || "Player";
+                        
+                        document.getElementById('user-name').innerText = finalName;
                         document.getElementById('user-balance').innerText = myData.balance;
                         document.getElementById('practice-count').innerText = myData.practiceCount;
-                        document.getElementById('nav-avatar').innerText = (data.username || "P").charAt(0).toUpperCase();
+                        document.getElementById('nav-avatar').innerText = finalName.charAt(0).toUpperCase();
                         document.getElementById('user-uid').innerText = "UID: " + user.uid.substring(0,8);
                     } else {
-                        userRef.set({ username: "Player_" + Math.floor(Math.random()*1000), balance: 0, practiceCount: 3 });
+                        // මුල්ම වතාවට එන කෙනෙක් නම් Default values සේව් කරනවා
+                        userRef.set({ userName: "Player_" + Math.floor(Math.random()*1000), balance: 0, practiceCount: 3 });
                     }
                 });
             } else window.location.href = "index.html";
