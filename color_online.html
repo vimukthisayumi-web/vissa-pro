@@ -3,49 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vissa-Pro Firebase Battle</title>
+    <title>Vissa-Pro Battle Mode</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     
     <style>
         :root { --primary: #ff4757; --secondary: #2ed573; --bg: #0f0f0f; --card: #1e1e1e; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
         .match-header { background: var(--card); padding: 15px; display: flex; justify-content: space-around; align-items: center; border-bottom: 3px solid var(--primary); }
-        .p-balance { font-size: 20px; font-weight: bold; }
-        
+        .p-balance { font-size: 20px; font-weight: bold; color: gold; }
         #timer-wrap { width: 100%; height: 6px; background: #222; }
         #timer-fill { width: 100%; height: 100%; background: var(--primary); transition: width 0.1s linear; }
-        
-        .game-zone { 
-            flex-grow: 1; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
-            padding-bottom: 100px; 
-        }
-        
+        .game-zone { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding-bottom: 100px; }
         #display-word { font-size: 60px; font-weight: 900; text-transform: uppercase; margin-bottom: 30px; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; max-width: 400px; }
         .color-btn { height: 80px; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 0 #000; }
-        
-        .footer { 
-            position: fixed;
-            bottom: 25px; 
-            left: 0;
-            right: 0;
-            background: var(--card); 
-            padding: 15px; 
-            display: flex; 
-            gap: 10px; 
-            margin: 0 15px;
-            border-radius: 15px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
-            border: 1px solid #333;
-            z-index: 100;
-        }
-        
+        .footer { position: fixed; bottom: 25px; left: 0; right: 0; background: var(--card); padding: 15px; display: flex; gap: 10px; margin: 0 15px; border-radius: 15px; border: 1px solid #333; z-index: 100; }
         .action-btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; text-transform: uppercase; }
     </style>
 </head>
@@ -54,14 +29,14 @@
     <div class="match-header">
         <div style="text-align:center">
             <div style="font-size:10px; color:#888;">ඔබ (<span id="role-ui">...</span>)</div>
-            <div id="my-bal-ui" class="p-balance">Rs. 100</div>
+            <div id="my-bal-ui" class="p-balance">LKR 0.00</div>
         </div>
         <div style="color:var(--secondary); font-weight:bold; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 20px;">
             POT: <span id="pot-ui">Rs. 0</span>
         </div>
         <div style="text-align:center">
             <div style="font-size:10px; color:#888;">ප්‍රතිවාදියා</div>
-            <div id="opp-bal-ui" class="p-balance">Rs. 100</div>
+            <div id="opp-bal-ui" class="p-balance">LKR ...</div>
         </div>
     </div>
 
@@ -79,7 +54,7 @@
 
     <footer class="footer">
         <button id="btn-bet" class="action-btn" style="background:var(--primary)" onclick="startBet()">START BET (Rs. 15)</button>
-        <button id="btn-cashout" class="action-btn" style="background:var(--secondary)" onclick="cashOut()">CASH OUT</button>
+        <button id="btn-cashout" class="action-btn" style="background:var(--secondary)" onclick="cashOut()">DASHBOARD</button>
     </footer>
 
     <script>
@@ -93,43 +68,49 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const fs = firebase.firestore();
+        const auth = firebase.auth();
 
         let roomId = "battle_room_1"; 
-        let myRole = ""; // Dynamic ව ලබා ගනී
-        let myBal = 100;
+        let myRole = ""; 
+        let currentBalance = 0;
         let isGameActive = false;
         let targetColor = "";
         const ROUND_FEE = 15;
-        const MAX_LIMIT = 180;
 
-        // --- Role එක ලබා ගැනීම ---
-        const roomRef = db.ref('rooms/' + roomId);
-        roomRef.once('value').then((snapshot) => {
-            const data = snapshot.val();
-            if (!data || !data.p1) {
-                myRole = "p1";
-                roomRef.update({ p1: "active", p1_ready: false });
-            } else if (!data.p2) {
-                myRole = "p2";
-                roomRef.update({ p2: "active", p2_ready: false });
-            } else {
-                alert("කාමරය පිරිලා!");
-            }
-            document.getElementById('role-ui').innerText = myRole.toUpperCase();
+        // 1. Dashboard එකේ Balance එක මුලින්ම ලබා ගැනීම
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                fs.collection("users").doc(user.uid).onSnapshot(doc => {
+                    if (doc.exists) {
+                        currentBalance = doc.data().balance || 0;
+                        document.getElementById('my-bal-ui').innerText = "LKR " + currentBalance.toFixed(2);
+                    }
+                });
+                joinRoom();
+            } else { window.location.href = "index.html"; }
         });
 
+        function joinRoom() {
+            const roomRef = db.ref('rooms/' + roomId);
+            roomRef.once('value').then((snapshot) => {
+                const data = snapshot.val();
+                if (!data || !data.p1) { myRole = "p1"; roomRef.update({ p1: auth.currentUser.uid, p1_ready: false }); }
+                else if (!data.p2) { myRole = "p2"; roomRef.update({ p2: auth.currentUser.uid, p2_ready: false }); }
+                else { alert("Room Full!"); }
+                document.getElementById('role-ui').innerText = myRole.toUpperCase();
+            });
+        }
+
         function startBet() {
-            if(!myRole) return alert("තවමත් සම්බන්ධ වෙමින් පවතී...");
-            if(myBal < ROUND_FEE) { alert("සල්ලි මදි!"); return; }
-            
+            if(currentBalance < ROUND_FEE) return alert("සල්ලි මදි!");
             db.ref('rooms/' + roomId + '/' + myRole + '_ready').set(true);
             document.getElementById('btn-bet').innerText = "WAITING...";
             document.getElementById('btn-bet').disabled = true;
-            document.getElementById('btn-bet').style.opacity = "0.5";
 
             db.ref('rooms/' + roomId).on('value', (snapshot) => {
                 const data = snapshot.val();
-                if (data && data.p1_ready === true && data.p2_ready === true && !isGameActive) {
+                if (data && data.p1_ready && data.p2_ready && !isGameActive) {
                     beginMatch();
                 }
             });
@@ -137,10 +118,10 @@
 
         function beginMatch() {
             isGameActive = true;
-            myBal -= ROUND_FEE;
+            // Bet එක දාපු ගමන් Dashboard එකෙන් රු. 15ක් අඩු කරනවා
+            updateFirestoreBalance(-ROUND_FEE);
             document.getElementById('pot-ui').innerText = "Rs. 30";
             document.getElementById('btn-bet').innerText = "LIVE!";
-            updateUI();
             nextRound();
         }
 
@@ -163,51 +144,54 @@
                 let diff = Date.now() - start;
                 let prog = Math.max(0, 100 - (diff / 1500 * 100));
                 document.getElementById('timer-fill').style.width = prog + "%";
-                if(diff >= 1500) endGame("TIME OUT!");
+                if(diff >= 1500) endGame(false); // පරාදයි
             }, 20);
         }
 
         function handleInput(choice) {
             if(!isGameActive) return;
             if(choice === targetColor) {
-                myBal += 10;
-                updateUI();
-                if(myBal >= MAX_LIMIT) {
-                    alert("MAX LIMIT!");
-                    window.location.href = "dashboard.html";
-                }
+                // හරි නම් තවදුරටත් ක්‍රීඩා කරයි (මෙහිදී balance එක එකතු වෙන්නේ දින්නොත් පමණි)
                 nextRound();
-            } else {
-                endGame("වැරදියි!");
-            }
+            } else { endGame(false); }
         }
 
-        function endGame(msg) {
+        async function endGame(win) {
             isGameActive = false;
             clearInterval(timer);
-            // Firebase එක Reset කිරීම (අනිත් අයටත් ඉඩ දීමට)
+            
+            if(win) {
+                // දිනුම් නම් Pot එකේ තියෙන රු. 30 (රු. 15 + 15) balance එකට එකතු කරයි
+                await updateFirestoreBalance(30);
+                alert("ඔබ ජයග්‍රහණය කළා! රු. 30ක් එකතු වුණා.");
+            } else {
+                alert("ඔබ පරාදයි! රු. 15ක් අහිමි වුණා.");
+                // අනෙක් කෙනා දිනුම් බව දැනුම් දීමට Realtime DB එක භාවිතා කළ හැක
+                db.ref('rooms/' + roomId).update({ winner: (myRole === "p1" ? "p2" : "p1") });
+            }
+
             db.ref('rooms/' + roomId).update({p1_ready: false, p2_ready: false});
-            alert(msg);
             location.reload();
         }
 
-        function updateUI() {
-            document.getElementById('my-bal-ui').innerText = "Rs. " + myBal;
+        // Dashboard එකේ සල්ලි Update කරන Function එක
+        function updateFirestoreBalance(amount) {
+            const userRef = fs.collection("users").doc(auth.currentUser.uid);
+            return userRef.update({
+                balance: firebase.firestore.FieldValue.increment(amount)
+            });
         }
 
-        function cashOut() {
-            window.location.href = "dashboard.html";
-        }
-
-        // Window එක වසන විට ඉවත් වීම
-        window.onbeforeunload = function() {
-            if (myRole) {
-                let clear = {};
-                clear[myRole] = null;
-                clear[myRole + '_ready'] = null;
-                db.ref('rooms/' + roomId).update(clear);
+        // ප්‍රතිවාදියා දිනූ විට මට ලැබෙන Listener එක
+        db.ref('rooms/' + roomId + '/winner').on('value', (snapshot) => {
+            if (snapshot.val() === myRole && !isGameActive) {
+                updateFirestoreBalance(30);
+                db.ref('rooms/' + roomId + '/winner').set(null);
+                alert("ප්‍රතිවාදියා පරාදයි! ඔබට රු. 30ක් ලැබුණා.");
             }
-        };
+        });
+
+        function cashOut() { window.location.href = "dashboard.html"; }
     </script>
 </body>
 </html>
