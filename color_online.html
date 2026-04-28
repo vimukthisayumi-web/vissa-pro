@@ -23,17 +23,16 @@
             flex-direction: column; 
             justify-content: center; 
             align-items: center; 
-            padding-bottom: 100px; /* Footer එකට ඉඩ තැබීමට */
+            padding-bottom: 100px; 
         }
         
         #display-word { font-size: 60px; font-weight: 900; text-transform: uppercase; margin-bottom: 30px; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; max-width: 400px; }
         .color-btn { height: 80px; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 0 #000; }
         
-        /* Footer එක පතුලෙන් ටිකක් උඩට ගෙන ඒම */
         .footer { 
             position: fixed;
-            bottom: 25px; /* පතුලේ සිට pixel 25ක් ඉහළට */
+            bottom: 25px; 
             left: 0;
             right: 0;
             background: var(--card); 
@@ -54,7 +53,7 @@
 
     <div class="match-header">
         <div style="text-align:center">
-            <div style="font-size:10px; color:#888;">ඔබ</div>
+            <div style="font-size:10px; color:#888;">ඔබ (<span id="role-ui">...</span>)</div>
             <div id="my-bal-ui" class="p-balance">Rs. 100</div>
         </div>
         <div style="color:var(--secondary); font-weight:bold; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 20px;">
@@ -96,15 +95,33 @@
         const db = firebase.database();
 
         let roomId = "battle_room_1"; 
-        let myRole = "p1"; 
+        let myRole = ""; // Dynamic ව ලබා ගනී
         let myBal = 100;
         let isGameActive = false;
         let targetColor = "";
         const ROUND_FEE = 15;
         const MAX_LIMIT = 180;
 
+        // --- Role එක ලබා ගැනීම ---
+        const roomRef = db.ref('rooms/' + roomId);
+        roomRef.once('value').then((snapshot) => {
+            const data = snapshot.val();
+            if (!data || !data.p1) {
+                myRole = "p1";
+                roomRef.update({ p1: "active", p1_ready: false });
+            } else if (!data.p2) {
+                myRole = "p2";
+                roomRef.update({ p2: "active", p2_ready: false });
+            } else {
+                alert("කාමරය පිරිලා!");
+            }
+            document.getElementById('role-ui').innerText = myRole.toUpperCase();
+        });
+
         function startBet() {
+            if(!myRole) return alert("තවමත් සම්බන්ධ වෙමින් පවතී...");
             if(myBal < ROUND_FEE) { alert("සල්ලි මදි!"); return; }
+            
             db.ref('rooms/' + roomId + '/' + myRole + '_ready').set(true);
             document.getElementById('btn-bet').innerText = "WAITING...";
             document.getElementById('btn-bet').disabled = true;
@@ -112,7 +129,7 @@
 
             db.ref('rooms/' + roomId).on('value', (snapshot) => {
                 const data = snapshot.val();
-                if (data && data.p1_ready && data.p2_ready && !isGameActive) {
+                if (data && data.p1_ready === true && data.p2_ready === true && !isGameActive) {
                     beginMatch();
                 }
             });
@@ -146,7 +163,7 @@
                 let diff = Date.now() - start;
                 let prog = Math.max(0, 100 - (diff / 1500 * 100));
                 document.getElementById('timer-fill').style.width = prog + "%";
-                if(diff >= 1500) endGame("TIME OUT! (රු. 15 පද්ධතියට)");
+                if(diff >= 1500) endGame("TIME OUT!");
             }, 20);
         }
 
@@ -156,18 +173,19 @@
                 myBal += 10;
                 updateUI();
                 if(myBal >= MAX_LIMIT) {
-                    alert("උපරිම සීමාව (180) සම්පූර්ණයි!");
+                    alert("MAX LIMIT!");
                     window.location.href = "dashboard.html";
                 }
                 nextRound();
             } else {
-                endGame("වැරදියි! (රු. 15 පද්ධතියට)");
+                endGame("වැරදියි!");
             }
         }
 
         function endGame(msg) {
             isGameActive = false;
             clearInterval(timer);
+            // Firebase එක Reset කිරීම (අනිත් අයටත් ඉඩ දීමට)
             db.ref('rooms/' + roomId).update({p1_ready: false, p2_ready: false});
             alert(msg);
             location.reload();
@@ -180,6 +198,16 @@
         function cashOut() {
             window.location.href = "dashboard.html";
         }
+
+        // Window එක වසන විට ඉවත් වීම
+        window.onbeforeunload = function() {
+            if (myRole) {
+                let clear = {};
+                clear[myRole] = null;
+                clear[myRole + '_ready'] = null;
+                db.ref('rooms/' + roomId).update(clear);
+            }
+        };
     </script>
 </body>
 </html>
