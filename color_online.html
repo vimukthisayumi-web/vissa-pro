@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vissa-Pro Battle Mode</title>
+    <title>Vissa-Pro Battle (Hard Mode)</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -13,29 +13,40 @@
         :root { --primary: #ff4757; --secondary: #2ed573; --bg: #0f0f0f; --card: #1e1e1e; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         .match-header { background: var(--card); padding: 15px; display: flex; justify-content: space-around; align-items: center; border-bottom: 3px solid var(--primary); }
-        .p-balance { font-size: 20px; font-weight: bold; color: gold; }
+        .p-balance { font-size: 18px; font-weight: bold; color: gold; }
         #timer-wrap { width: 100%; height: 6px; background: #222; }
         #timer-fill { width: 100%; height: 100%; background: var(--primary); transition: width 0.1s linear; }
-        .game-zone { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding-bottom: 100px; }
-        #display-word { font-size: 60px; font-weight: 900; text-transform: uppercase; margin-bottom: 30px; }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 90%; max-width: 400px; }
-        .color-btn { height: 80px; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 0 #000; }
-        .footer { position: fixed; bottom: 25px; left: 0; right: 0; background: var(--card); padding: 15px; display: flex; gap: 10px; margin: 0 15px; border-radius: 15px; border: 1px solid #333; z-index: 100; }
-        .action-btn { flex: 1; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; text-transform: uppercase; }
+        
+        .game-zone { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding-bottom: 110px; }
+        #display-word { font-size: 50px; font-weight: 900; text-transform: uppercase; margin-bottom: 25px; letter-spacing: 3px; }
+        
+        /* 6 Buttons Grid */
+        .btn-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr; /* තීරු 3ක් */
+            gap: 12px; 
+            width: 95%; 
+            max-width: 400px; 
+        }
+        .color-btn { height: 70px; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 0 #000; transition: transform 0.1s; }
+        .color-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #000; }
+        
+        .footer { position: fixed; bottom: 20px; left: 0; right: 0; background: var(--card); padding: 12px; display: flex; gap: 10px; margin: 0 15px; border-radius: 15px; border: 1px solid #333; z-index: 100; }
+        .action-btn { flex: 1; padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; color: white; text-transform: uppercase; font-size: 12px; }
     </style>
 </head>
 <body>
 
     <div class="match-header">
         <div style="text-align:center">
-            <div style="font-size:10px; color:#888;">ඔබ (<span id="role-ui">...</span>)</div>
+            <div style="font-size:9px; color:#888;">ඔබ (<span id="role-ui">...</span>)</div>
             <div id="my-bal-ui" class="p-balance">LKR 0.00</div>
         </div>
-        <div style="color:var(--secondary); font-weight:bold; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 20px;">
+        <div style="color:var(--secondary); font-weight:bold; border: 1px solid var(--primary); padding: 5px 12px; border-radius: 20px; font-size: 14px;">
             POT: <span id="pot-ui">Rs. 0</span>
         </div>
         <div style="text-align:center">
-            <div style="font-size:10px; color:#888;">ප්‍රතිවාදියා</div>
+            <div style="font-size:9px; color:#888;">ප්‍රතිවාදියා</div>
             <div id="opp-bal-ui" class="p-balance">LKR ...</div>
         </div>
     </div>
@@ -49,11 +60,13 @@
             <button class="color-btn" style="background:#1e90ff" onclick="handleInput('blue')"></button>
             <button class="color-btn" style="background:#2ed573" onclick="handleInput('green')"></button>
             <button class="color-btn" style="background:#ffa502" onclick="handleInput('yellow')"></button>
+            <button class="color-btn" style="background:#a020f0" onclick="handleInput('purple')"></button>
+            <button class="color-btn" style="background:#ffffff" onclick="handleInput('white')"></button>
         </div>
     </main>
 
     <footer class="footer">
-        <button id="btn-bet" class="action-btn" style="background:var(--primary)" onclick="startBet()">START BET (Rs. 15)</button>
+        <button id="btn-bet" class="action-btn" style="background:var(--primary)" onclick="startBet()">START (Rs. 15)</button>
         <button id="btn-cashout" class="action-btn" style="background:var(--secondary)" onclick="cashOut()">DASHBOARD</button>
     </footer>
 
@@ -78,7 +91,6 @@
         let targetColor = "";
         const ROUND_FEE = 15;
 
-        // 1. Dashboard එකේ Balance එක මුලින්ම ලබා ගැනීම
         auth.onAuthStateChanged(user => {
             if (user) {
                 fs.collection("users").doc(user.uid).onSnapshot(doc => {
@@ -97,7 +109,6 @@
                 const data = snapshot.val();
                 if (!data || !data.p1) { myRole = "p1"; roomRef.update({ p1: auth.currentUser.uid, p1_ready: false }); }
                 else if (!data.p2) { myRole = "p2"; roomRef.update({ p2: auth.currentUser.uid, p2_ready: false }); }
-                else { alert("Room Full!"); }
                 document.getElementById('role-ui').innerText = myRole.toUpperCase();
             });
         }
@@ -118,7 +129,6 @@
 
         function beginMatch() {
             isGameActive = true;
-            // Bet එක දාපු ගමන් Dashboard එකෙන් රු. 15ක් අඩු කරනවා
             updateFirestoreBalance(-ROUND_FEE);
             document.getElementById('pot-ui').innerText = "Rs. 30";
             document.getElementById('btn-bet').innerText = "LIVE!";
@@ -127,9 +137,11 @@
 
         function nextRound() {
             if(!isGameActive) return;
-            const colors = ["red", "blue", "green", "yellow"];
+            // දැන් පාට 6ක් තියෙනවා
+            const colors = ["red", "blue", "green", "yellow", "purple", "white"];
             let txt = colors[Math.floor(Math.random() * colors.length)];
             targetColor = colors[Math.floor(Math.random() * colors.length)];
+            
             let el = document.getElementById('display-word');
             el.innerText = txt.toUpperCase();
             el.style.color = targetColor;
@@ -142,16 +154,15 @@
             let start = Date.now();
             timer = setInterval(() => {
                 let diff = Date.now() - start;
-                let prog = Math.max(0, 100 - (diff / 1500 * 100));
+                let prog = Math.max(0, 100 - (diff / 1500 * 100)); // තත්පර 1.5 යි කාලය
                 document.getElementById('timer-fill').style.width = prog + "%";
-                if(diff >= 1500) endGame(false); // පරාදයි
+                if(diff >= 1500) endGame(false); 
             }, 20);
         }
 
         function handleInput(choice) {
             if(!isGameActive) return;
             if(choice === targetColor) {
-                // හරි නම් තවදුරටත් ක්‍රීඩා කරයි (මෙහිදී balance එක එකතු වෙන්නේ දින්නොත් පමණි)
                 nextRound();
             } else { endGame(false); }
         }
@@ -161,12 +172,10 @@
             clearInterval(timer);
             
             if(win) {
-                // දිනුම් නම් Pot එකේ තියෙන රු. 30 (රු. 15 + 15) balance එකට එකතු කරයි
                 await updateFirestoreBalance(30);
-                alert("ඔබ ජයග්‍රහණය කළා! රු. 30ක් එකතු වුණා.");
+                alert("ඔබ ජයග්‍රහණය කළා! රු. 30ක් ලැබුණා.");
             } else {
-                alert("ඔබ පරාදයි! රු. 15ක් අහිමි වුණා.");
-                // අනෙක් කෙනා දිනුම් බව දැනුම් දීමට Realtime DB එක භාවිතා කළ හැක
+                alert("ඔබ පරාදයි!");
                 db.ref('rooms/' + roomId).update({ winner: (myRole === "p1" ? "p2" : "p1") });
             }
 
@@ -174,15 +183,12 @@
             location.reload();
         }
 
-        // Dashboard එකේ සල්ලි Update කරන Function එක
         function updateFirestoreBalance(amount) {
-            const userRef = fs.collection("users").doc(auth.currentUser.uid);
-            return userRef.update({
+            return fs.collection("users").doc(auth.currentUser.uid).update({
                 balance: firebase.firestore.FieldValue.increment(amount)
             });
         }
 
-        // ප්‍රතිවාදියා දිනූ විට මට ලැබෙන Listener එක
         db.ref('rooms/' + roomId + '/winner').on('value', (snapshot) => {
             if (snapshot.val() === myRole && !isGameActive) {
                 updateFirestoreBalance(30);
