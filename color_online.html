@@ -6,6 +6,7 @@
     <title>Vissa-Pro Firebase Battle</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     
     <style>
         :root { --primary: #ff4757; --secondary: #2ed573; --bg: #0f0f0f; --card: #1e1e1e; }
@@ -19,8 +20,8 @@
             flex-direction: column; 
             height: 100vh; 
             overflow: hidden;
-            /* Mobile Navigation bar එකට ඉඩ තැබීම */
-            padding-bottom: env(safe-area-inset-bottom);
+            /* Buttons උඩට ගැනීමට පහළින් විශාල ඉඩක් තැබීම */
+            padding-bottom: 80px; 
         }
 
         .match-header { 
@@ -30,10 +31,10 @@
             justify-content: space-around; 
             align-items: center; 
             border-bottom: 3px solid var(--primary); 
-            z-index: 10;
         }
 
-        .p-balance { font-size: 20px; font-weight: bold; }
+        .p-name { font-size: 12px; color: gold; font-weight: bold; text-transform: uppercase; }
+        .p-balance { font-size: 16px; font-weight: bold; }
         
         #timer-wrap { width: 100%; height: 6px; background: #222; }
         #timer-fill { width: 100%; height: 100%; background: var(--primary); transition: width 0.1s linear; }
@@ -45,54 +46,58 @@
             justify-content: center; 
             align-items: center;
             padding: 10px;
+            margin-bottom: 20px; /* Game Buttons සහ පහළ Buttons අතර පරතරය */
         }
 
         #display-word { 
-            font-size: 55px; 
+            font-size: 45px; 
             font-weight: 900; 
             text-transform: uppercase; 
-            margin-bottom: 25px; 
+            margin-bottom: 15px; 
             text-shadow: 0 0 10px rgba(255,255,255,0.2);
         }
 
         .btn-grid { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
-            gap: 12px; 
-            width: 90%; 
-            max-width: 380px; 
+            gap: 10px; 
+            width: 85%; 
+            max-width: 340px; 
         }
 
         .color-btn { 
-            height: 75px; 
+            height: 65px; 
             border: none; 
             border-radius: 15px; 
             cursor: pointer; 
-            box-shadow: 0 4px 0 #000; 
-            transition: transform 0.1s;
+            box-shadow: 0 4px 0 #000;
         }
-        
-        .color-btn:active { transform: translateY(4px); box-shadow: none; }
 
+        /* මෙන්න මේ කොටසින් තමයි Buttons උඩට ගන්නේ */
         .footer { 
-            background: var(--card); 
-            padding: 15px 15px 25px 15px; /* පතුලේ padding එක වැඩි කළා */
+            position: fixed;
+            bottom: 30px; /* Screen එකේ යට ඉඳන් 30px උඩට ගත්තා */
+            left: 0;
+            width: 100%;
+            background: transparent; 
+            padding: 0 15px;
             display: flex; 
             gap: 10px; 
-            border-top: 1px solid #333;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+            box-sizing: border-box;
+            z-index: 100;
         }
 
         .action-btn { 
             flex: 1; 
-            padding: 16px; 
+            padding: 18px; 
             border: none; 
-            border-radius: 12px; 
+            border-radius: 15px; 
             font-weight: bold; 
             cursor: pointer; 
             color: white; 
-            text-transform: uppercase; 
+            text-transform: uppercase;
             font-size: 14px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
         }
     </style>
 </head>
@@ -100,15 +105,15 @@
 
     <div class="match-header">
         <div style="text-align:center">
-            <div style="font-size:10px; color:#888;">ඔබ</div>
-            <div id="my-bal-ui" class="p-balance">Rs. 100</div>
+            <div id="my-name-ui" class="p-name">ඔබ</div>
+            <div id="my-bal-ui" class="p-balance">Rs. 0</div>
         </div>
         <div style="color:var(--secondary); font-weight:bold; border: 1px solid var(--primary); padding: 5px 15px; border-radius: 20px;">
             POT: <span id="pot-ui">Rs. 0</span>
         </div>
         <div style="text-align:center">
-            <div style="font-size:10px; color:#888;">ප්‍රතිවාදියා</div>
-            <div id="opp-bal-ui" class="p-balance">Rs. 100</div>
+            <div id="opp-name-ui" class="p-name">ප්‍රතිවාදියා</div>
+            <div id="opp-bal-ui" class="p-balance">Rs. 0</div>
         </div>
     </div>
 
@@ -125,7 +130,7 @@
     </main>
 
     <footer class="footer">
-        <button id="btn-bet" class="action-btn" style="background:var(--primary)" onclick="startBet()">START BET (Rs. 15)</button>
+        <button id="btn-bet" class="action-btn" style="background:var(--primary)" onclick="startBet()">START BET</button>
         <button id="btn-cashout" class="action-btn" style="background:var(--secondary)" onclick="cashOut()">CASH OUT</button>
     </footer>
 
@@ -136,97 +141,91 @@
             projectId: "vissaprocarrom",
             storageBucket: "vissaprocarrom.firebasestorage.app",
             messagingSenderId: "722305696915",
-            appId: "1:722305696915:web:056e8be25a245ac29c7966",
-            measurementId: "G-KCKJLGX5J5"
+            appId: "1:722305696915:web:056e8be25a245ac29c7966"
         };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const auth = firebase.auth();
 
-        let roomId = "battle_room_1"; 
-        let myRole = "p1"; 
-        let oppRole = (myRole === "p1") ? "p2" : "p1";
-        
-        let myBal = 100;
+        let roomId = "battle_room_1";
+        let myUid = "";
+        let myRole = "";
         let isGameActive = false;
-        let targetColor = "";
-        const ROUND_FEE = 15;
-        const MAX_LIMIT = 180;
+        let myBal = 0;
 
-        function startBet() {
-            if(myBal < ROUND_FEE) { alert("සල්ලි මදි!"); return; }
-            db.ref('rooms/' + roomId + '/' + myRole + '_ready').set(true);
-            
-            document.getElementById('btn-bet').innerText = "WAITING...";
-            document.getElementById('btn-bet').disabled = true;
-            document.getElementById('btn-bet').style.opacity = "0.5";
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                myUid = user.uid;
+                initMatch();
+            } else {
+                window.location.href = "index.html";
+            }
+        });
 
-            db.ref('rooms/' + roomId).on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data && data.p1_ready && data.p2_ready && !isGameActive) {
-                    beginMatch();
+        function initMatch() {
+            // Player Role එක තීරණය කිරීම (P1/P2)
+            const roomRef = db.ref('rooms/' + roomId);
+            roomRef.child('players').once('value', snap => {
+                let players = snap.val();
+                if(!players) {
+                    myRole = "p1";
+                    roomRef.child('players/p1').set(myUid);
+                } else if(!players.p2 && players.p1 !== myUid) {
+                    myRole = "p2";
+                    roomRef.child('players/p2').set(myUid);
+                } else {
+                    myRole = (players.p1 === myUid) ? "p1" : "p2";
+                }
+
+                // නම් ලබා ගැනීම (Real-time Firestore/Database එකෙන්)
+                // සටහන: Profile එකේ සේව් කරපු නම පෙන්වීමට මෙතන db.ref('users') පාවිච්චි වේ
+                db.ref('users/' + myUid).on('value', s => {
+                    if(s.exists()) {
+                        document.getElementById('my-name-ui').innerText = s.val().userName || "ඔබ";
+                        myBal = s.val().balance || 0;
+                        document.getElementById('my-bal-ui').innerText = "Rs. " + myBal;
+                    }
+                });
+
+                monitorRoom(roomRef);
+            });
+        }
+
+        function monitorRoom(roomRef) {
+            roomRef.on('value', snap => {
+                let data = snap.val();
+                if(data && data.players) {
+                    let oppRole = (myRole === "p1") ? "p2" : "p1";
+                    let oppUid = data.players[oppRole];
+                    
+                    if(oppUid) {
+                        db.ref('users/' + oppUid).once('value', s => {
+                            document.getElementById('opp-name-ui').innerText = s.val().userName || "ප්‍රතිවාදියා";
+                            document.getElementById('opp-bal-ui').innerText = "Rs. " + (s.val().balance || 0);
+                        });
+                    }
+
+                    // දෙන්නම Ready නම් පටන් ගන්න
+                    if(data.p1_ready && data.p2_ready && !isGameActive) {
+                        beginMatch();
+                    }
                 }
             });
         }
 
+        function startBet() {
+            if(myBal < 15) return alert("සල්ලි මදි!");
+            db.ref('rooms/' + roomId + '/' + myRole + '_ready').set(true);
+            document.getElementById('btn-bet').innerText = "WAITING...";
+            document.getElementById('btn-bet').disabled = true;
+            document.getElementById('btn-bet').style.opacity = "0.6";
+        }
+
         function beginMatch() {
             isGameActive = true;
-            myBal -= ROUND_FEE;
             document.getElementById('pot-ui').innerText = "Rs. 30";
             document.getElementById('btn-bet').innerText = "LIVE!";
-            updateUI();
-            nextRound();
-        }
-
-        function nextRound() {
-            if(!isGameActive) return;
-            const colors = ["red", "blue", "green", "yellow"];
-            let txt = colors[Math.floor(Math.random() * colors.length)];
-            targetColor = colors[Math.floor(Math.random() * colors.length)];
-            
-            let el = document.getElementById('display-word');
-            el.innerText = txt.toUpperCase();
-            el.style.color = targetColor;
-            
-            startTimer();
-        }
-
-        let timer;
-        function startTimer() {
-            clearInterval(timer);
-            let start = Date.now();
-            timer = setInterval(() => {
-                let diff = Date.now() - start;
-                let prog = Math.max(0, 100 - (diff / 1500 * 100));
-                document.getElementById('timer-fill').style.width = prog + "%";
-                if(diff >= 1500) endGame("TIME OUT! (රු. 15 පද්ධතියට)");
-            }, 20);
-        }
-
-        function handleInput(choice) {
-            if(!isGameActive) return;
-            if(choice === targetColor) {
-                myBal += 10;
-                updateUI();
-                if(myBal >= MAX_LIMIT) {
-                    alert("උපරිම සීමාව (180) සම්පූර්ණයි!");
-                    window.location.href = "dashboard.html";
-                }
-                nextRound();
-            } else {
-                endGame("වැරදියි! (රු. 15 පද්ධතියට)");
-            }
-        }
-
-        function endGame(msg) {
-            isGameActive = false;
-            clearInterval(timer);
-            db.ref('rooms/' + roomId).update({p1_ready: false, p2_ready: false});
-            alert(msg);
-            location.reload();
-        }
-
-        function updateUI() {
-            document.getElementById('my-bal-ui').innerText = "Rs. " + myBal;
+            // මෙතනින් ඉදිරියට Game Logic එක ක්‍රියාත්මක වේ...
         }
 
         function cashOut() {
