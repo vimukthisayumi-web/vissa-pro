@@ -7,6 +7,13 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #08051a; color: white; padding: 20px; }
         .section-title { color: gold; border-bottom: 2px solid #444; padding-bottom: 10px; margin-top: 40px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* Dashboard Stats Style */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: #1a1a4a; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid gold; }
+        .stat-card h3 { margin: 0; font-size: 12px; color: #aaa; }
+        .stat-card p { margin: 5px 0 0; font-size: 24px; font-weight: bold; color: gold; }
+
         .request-card { background: #11113d; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #333; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .deposit-card { border-left: 6px solid #28a745; }
         .withdraw-card { border-left: 6px solid #dc3545; }
@@ -18,13 +25,26 @@
         .btn { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.3s; }
         .approve-btn { background: #28a745; color: white; }
         .reject-btn { background: #dc3545; color: white; }
-        .btn:hover { opacity: 0.8; transform: translateY(-2px); }
+        .reset-btn { background: #555; color: white; width: 100%; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <h1 style="text-align: center; color: gold; margin-bottom: 5px;">VISSA PRO</h1>
     <p style="text-align: center; color: gray; font-size: 12px; margin-top: 0;">SUPER ADMIN MANAGEMENT</p>
+
+    <h2 class="section-title">📊 System Overview</h2>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>TOTAL PROFIT (Your Earnings)</h3>
+            <p id="total-profit">LKR 0.00</p>
+        </div>
+        <div class="stat-card" style="border-color: #1e90ff;">
+            <h3>CURRENT LIVE POT</h3>
+            <p id="live-pot" style="color: #1e90ff;">LKR 0.00</p>
+        </div>
+    </div>
+    <button class="btn reset-btn" onclick="emergencyReset()">EMERGENCY GAME RESET ⚠️</button>
 
     <h2 class="section-title">💰 Deposit Requests</h2>
     <div id="deposit-list">පරීක්ෂා කරමින්...</div>
@@ -34,13 +54,14 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script> <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAocTZebNq7XwT-uUG1Q0I1SG1jyBNWWwQ",
             authDomain: "vissaprocarrom.firebaseapp.com",
             projectId: "vissaprocarrom",
+            databaseURL: "https://vissaprocarrom-default-rtdb.firebaseio.com", // මෙතන ඔයාගේ DB URL එක බලන්න
             storageBucket: "vissaprocarrom.firebasestorage.app",
             messagingSenderId: "722305696915",
             appId: "1:722305696915:web:056e8be25a245ac29c7966"
@@ -48,6 +69,7 @@
 
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const rdb = firebase.database();
         const auth = firebase.auth();
 
         const MY_ADMIN_UID = "EM6KUIjRNzS8WFXxBrAEYIrZXzK2";
@@ -55,11 +77,33 @@
         auth.onAuthStateChanged(user => {
             if (user && user.uid === MY_ADMIN_UID) {
                 initAdmin();
+                listenToStats();
             } else {
                 alert("අවසර නැත!");
                 window.location.href = "index.html";
             }
         });
+
+        // ලාභය සහ Live Pot එක Realtime පෙන්වීම
+        function listenToStats() {
+            // ඔයාගේ ලාභය පෙන්වීම
+            rdb.ref('admin/profit').on('value', s => {
+                document.getElementById('total-profit').innerText = "LKR " + (s.val() || 0).toFixed(2);
+            });
+
+            // දැනට ගේම් එකේ තියෙන මුදල පෙන්වීම
+            rdb.ref('global_game/pot').on('value', s => {
+                document.getElementById('live-pot').innerText = "LKR " + (s.val() || 0).toFixed(2);
+            });
+        }
+
+        // ගේම් එකේ මොකක් හරි හිර වුණොත් Reset කරන්න
+        function emergencyReset() {
+            if (confirm("සැබවින්ම Game එක Reset කරන්නද? සියලුම Pot සල්ලි මකා දැමෙනු ඇත!")) {
+                rdb.ref('global_game').set({ status: "WAITING", pot: 0 });
+                alert("Game Reset Success!");
+            }
+        }
 
         function initAdmin() {
             // Load Pending Deposits
@@ -101,6 +145,7 @@
             });
         }
 
+        // --- Deposit Handling ---
         async function handleDeposit(docId, uId, amt) {
             if (!confirm("LKR " + amt + " තැන්පත් කරන්නද?")) return;
             const uRef = db.collection("users").doc(uId);
@@ -117,6 +162,7 @@
             } catch (e) { alert("Error: " + e); }
         }
 
+        // --- Withdrawal Handling ---
         async function handleWithdraw(docId, uId, amt) {
             if (!confirm("ඔබ මුදල් යැවුවාද? මෙය Approve කළ පසු User ගේ Balance එකෙන් LKR " + amt + " කැපෙනු ඇත.")) return;
             const uRef = db.collection("users").doc(uId);
